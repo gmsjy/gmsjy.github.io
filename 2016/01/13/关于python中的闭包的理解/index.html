@@ -11,7 +11,7 @@
     
     <meta name="description" content="闭包一词是词法闭包的简称，指的是引用了自由变量的函数，这自由变量将和函数一起存在，哪怕是离开了其创造环境。也就是说所谓闭包是函数是与其相关变量所组合而成的实体。
 python中闭包可以由返回函数产生,可以游荡在之后的程序中而不因其产生函数的截止而消失。
-#为什么使用闭包#  使用闭包的目的在于对于一">
+#为什么使用闭包  使用闭包的目的在于对于一些">
     
     
     
@@ -77,7 +77,7 @@ python中闭包可以由返回函数产生,可以游荡在之后的程序中而�
     </p>
   <p class="article-time">
     <time datetime="2016-01-13T04:47:40.000Z" itemprop="datePublished">2016-01-13</time>
-    更新日期:<time datetime="2016-01-13T06:18:02.000Z" itemprop="dateModified">2016-01-13</time>
+    更新日期:<time datetime="2016-01-13T06:27:47.000Z" itemprop="dateModified">2016-01-13</time>
     
   </p>
 </header>
@@ -91,9 +91,9 @@ python中闭包可以由返回函数产生,可以游荡在之后的程序中而�
 		
 		<p>闭包一词是词法闭包的简称，指的是引用了自由变量的函数，这自由变量将和函数一起存在，哪怕是离开了其创造环境。也就是说所谓闭包是函数是与其相关变量所组合而成的实体。</p>
 <p>python中闭包可以由返回函数产生,可以游荡在之后的程序中而不因其产生函数的截止而消失。</p>
-<p>#为什么使用闭包#<br>  使用闭包的目的在于对于一些数据形式的封装，作为一个对象完成特定的功能。在python中常见的使用场景就是装饰器的使用，如下所示：<br>`def decorator_func(func):<br>    def wrapper(<em>args,**kwargs):<br>        return func(</em>args,**kwargs)<br>    return wrapper</p>
+<p>#为什么使用闭包<br>  使用闭包的目的在于对于一些数据形式的封装，作为一个对象完成特定的功能。在python中常见的使用场景就是装饰器的使用，如下所示：<br>``def decorator_func(func):<br>    def wrapper(<em>args,**kwargs):<br>        return func(</em>args,**kwargs)<br>    return wrapper</p>
 <p>@decorator_func<br>def func(name):<br>    print ‘my name is’,name</p>
-<p>#等同于下面函数<br>decorator_func(func)`</p>
+<p>#等同于下面函数<br>decorator_func(func)``</p>
 <p>在上面例子中，闭包接到外部的func参数，可以从外部接到参数原样传给func而后返回执行结果。</p>
   
 	</div>
