@@ -3,11 +3,32 @@
   
     
     <entry>
-      <title></title>
+      <title>正则表达式的基本内容</title>
       <link href="/2018/10/10/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/"/>
       <url>/2018/10/10/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/</url>
-      <content type="html"><![CDATA[<h1 id="正则表达式的基本内容和一些使用例子"><a href="#正则表达式的基本内容和一些使用例子" class="headerlink" title="正则表达式的基本内容和一些使用例子"></a>正则表达式的基本内容和一些使用例子</h1><blockquote><p>这个问题的解决需要正则表达式，那么现在我们就有了两个问题。</p></blockquote><table><thead><tr><th>操作符</th><th>说明</th><th>实例</th></tr></thead><tbody><tr><td>.</td><td>表示任意单字符</td><td>.</td></tr><tr><td>*</td><td>前一个字符0或无数次扩展</td><td>C*表示C,CC,CCC</td></tr><tr><td>+</td><td>前一个字符1次或无数次扩展</td><td>C+表示CC,CCC,CCCC</td></tr></tbody></table>]]></content>
+      <content type="html"><![CDATA[<h1 id="正则表达式的基本内容和一些使用例子"><a href="#正则表达式的基本内容和一些使用例子" class="headerlink" title="正则表达式的基本内容和一些使用例子"></a>正则表达式的基本内容和一些使用例子</h1><blockquote><p>这个问题的解决需要正则表达式，那么现在我们就有了两个问题。</p></blockquote><table><thead><tr><th>操作符</th><th>说明</th><th>实例</th></tr></thead><tbody><tr><td>.</td><td>表示任意单字符</td><td>.</td></tr><tr><td>*</td><td>前一个字符0或无数次扩展</td><td>C*表示C,CC,CCC</td></tr><tr><td>+</td><td>前一个字符1次或无数次扩展</td><td>C+表示CC,CCC,CCCC</td></tr><tr><td>[]</td><td>指定单个字符集</td><td>[qwer]表示字母q,w,e,或者r</td></tr><tr><td>[^]</td><td>指定排除单字符集</td><td>[^a]表示除了a以外其余字符</td></tr></tbody></table>]]></content>
       
+      
+        <tags>
+            
+            <tag> regular-expression </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    <entry>
+      <title>随笔</title>
+      <link href="/2018/10/10/%E9%9A%8F%E7%AC%94/"/>
+      <url>/2018/10/10/%E9%9A%8F%E7%AC%94/</url>
+      <content type="html"><![CDATA[<h1 id="工作方法"><a href="#工作方法" class="headerlink" title="工作方法"></a>工作方法</h1><h2 id="列表完成法"><a href="#列表完成法" class="headerlink" title="列表完成法"></a>列表完成法</h2><p>每天早起首先列出一天的工作，做出清单在一天内逐个完成。</p>]]></content>
+      
+      
+        <tags>
+            
+            <tag> 随笔 生活 </tag>
+            
+        </tags>
       
     </entry>
     
@@ -30,7 +51,7 @@
       <title>Hello World</title>
       <link href="/2018/07/17/hello-world/"/>
       <url>/2018/07/17/hello-world/</url>
-      <content type="html"><![CDATA[<h1 id="开始的路"><a href="#开始的路" class="headerlink" title="开始的路"></a>开始的路</h1><blockquote><p>hello word！<br>随笔乱纪,参加工作之后理想遥远，意志不坚定。</p></blockquote>]]></content>
+      <content type="html"><![CDATA[<h1 id="开始的路"><a href="#开始的路" class="headerlink" title="开始的路"></a>开始的路</h1><blockquote><p>hello word！<br>随笔,参加工作之后理想遥远，意志不坚定。</p></blockquote>]]></content>
       
       
     </entry>
