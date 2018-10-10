@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2018-07-31T03:05:01.663Z</updated>
+  <updated>2018-10-10T02:08:07.564Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -17,13 +17,35 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title></title>
+    <link href="http://yoursite.com/2018/10/10/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/"/>
+    <id>http://yoursite.com/2018/10/10/正则表达式/</id>
+    <published>2018-10-10T02:01:15.549Z</published>
+    <updated>2018-10-10T02:08:07.564Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="正则表达式的基本内容和一些使用例子"><a href="#正则表达式的基本内容和一些使用例子" class="headerlink" title="正则表达式的基本内容和一些使用例子"></a>正则表达式的基本内容和一些使用例子</h1><blockquote><p>这个问题的解决需要正则表达式，那么现在我们就有了两个问题。</p></blockquote><table><thead><tr><th>操作符</th><th>说明</th><th>实例</th></tr></thead><tbody><tr><td>.</td><td>表示任意单字符</td><td>.</td></tr><tr><td>*</td><td>前一个字符0或无数次扩展</td><td>C*表示C,CC,CCC</td></tr><tr><td>+</td><td>前一个字符1次或无数次扩展</td><td>C+表示CC,CCC,CCCC</td></tr></tbody></table>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h1 id=&quot;正则表达式的基本内容和一些使用例子&quot;&gt;&lt;a href=&quot;#正则表达式的基本内容和一些使用例子&quot; class=&quot;headerlink&quot; title=&quot;正则表达式的基本内容和一些使用例子&quot;&gt;&lt;/a&gt;正则表达式的基本内容和一些使用例子&lt;/h1&gt;&lt;blockquote&gt;
+
+      
+    
+    </summary>
+    
+    
+  </entry>
+  
+  <entry>
     <title>markdown 文法（一）</title>
     <link href="http://yoursite.com/2018/07/17/markdown/"/>
     <id>http://yoursite.com/2018/07/17/markdown/</id>
     <published>2018-07-17T02:49:56.000Z</published>
-    <updated>2018-07-31T03:05:01.663Z</updated>
+    <updated>2018-10-10T02:05:09.572Z</updated>
     
-    <content type="html"><![CDATA[<h1 id="Markdown-语法样例"><a href="#Markdown-语法样例" class="headerlink" title="Markdown 语法样例"></a>Markdown 语法样例</h1><blockquote><p>主要写些样例复习总结.<br>生活里面意外颇多，总是怕自己遗忘</p></blockquote><h2 id="各级标题"><a href="#各级标题" class="headerlink" title="各级标题"></a>各级标题</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># 一级标题 // 代表各级标题</span></span><br></pre></td></tr></table></figure><h2 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="quote">&gt; 名人名言 // 代表引用</span></span><br></pre></td></tr></table></figure><h2 id="代码块"><a href="#代码块" class="headerlink" title="代码块"></a>代码块</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="code">```开始</span></span><br><span class="line"><span class="code">``` 结束</span></span><br><span class="line"><span class="code">开始的位置可以写所使用的语言</span></span><br></pre></td></tr></table></figure><h2 id="列表"><a href="#列表" class="headerlink" title="列表"></a>列表</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">* </span>1</span><br><span class="line"><span class="bullet">* </span>2</span><br></pre></td></tr></table></figure><h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p><a href="https://www.baidu.com" target="_blank" rel="noopener">百度</a></p><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="string">百度</span>](<span class="link">https://www.baidu.com</span>)</span><br></pre></td></tr></table></figure><h2 id="图片"><a href="#图片" class="headerlink" title="图片"></a>图片</h2><p><img src="https://img3.doubanio.com/view/subject/l/public/s26851036.jpg" alt="盲视" title="盲视"></p><h2 id="任务列表"><a href="#任务列表" class="headerlink" title="任务列表"></a>任务列表</h2><ul><li style="list-style: none"><input type="checkbox" checked> 吃饭</li><li>[] 睡觉</li><li>[] 打豆豆</li></ul><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">- </span>[x] 吃饭</span><br><span class="line"><span class="bullet">- </span>[] 睡觉</span><br><span class="line"><span class="bullet">- </span>[] 打豆豆</span><br></pre></td></tr></table></figure><p>## </p>]]></content>
+    <content type="html"><![CDATA[<h1 id="Markdown-语法样例"><a href="#Markdown-语法样例" class="headerlink" title="Markdown 语法样例"></a>Markdown 语法样例</h1><blockquote><p>主要写些样例复习总结.<br>生活里面意外颇多，总是怕自己遗忘</p></blockquote><h2 id="各级标题"><a href="#各级标题" class="headerlink" title="各级标题"></a>各级标题</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># 一级标题 // 代表各级标题</span></span><br></pre></td></tr></table></figure><h2 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="quote">&gt; 名人名言 // 代表引用</span></span><br></pre></td></tr></table></figure><h2 id="代码块"><a href="#代码块" class="headerlink" title="代码块"></a>代码块</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="code">```开始</span></span><br><span class="line"><span class="code">``` 结束</span></span><br><span class="line"><span class="code">开始的位置可以写所使用的语言</span></span><br></pre></td></tr></table></figure><h2 id="列表"><a href="#列表" class="headerlink" title="列表"></a>列表</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">* </span>1</span><br><span class="line"><span class="bullet">* </span>2</span><br></pre></td></tr></table></figure><h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p><a href="https://www.baidu.com" target="_blank" rel="noopener">百度</a></p><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="string">百度</span>](<span class="link">https://www.baidu.com</span>)</span><br></pre></td></tr></table></figure><h2 id="图片"><a href="#图片" class="headerlink" title="图片"></a>图片</h2><p><img src="https://img3.doubanio.com/view/subject/l/public/s26851036.jpg" alt="盲视" title="盲视"></p><h2 id="任务列表"><a href="#任务列表" class="headerlink" title="任务列表"></a>任务列表</h2><ul><li style="list-style: none"><input type="checkbox" checked> 吃饭</li><li>[] 睡觉</li><li>[] 打豆豆</li></ul><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">- </span>[x] 吃饭</span><br><span class="line"><span class="bullet">- </span>[] 睡觉</span><br><span class="line"><span class="bullet">- </span>[] 打豆豆</span><br></pre></td></tr></table></figure><h2 id="表格"><a href="#表格" class="headerlink" title="表格"></a>表格</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">| Column A | Column B | Column C |</span><br><span class="line">| -------- | -------- | -------- |</span><br><span class="line">| A1       | B1       | C1       |</span><br><span class="line">| A2       | B2       | C2       |</span><br><span class="line">| A3       | B3       | C3       |</span><br></pre></td></tr></table></figure>]]></content>
     
     <summary type="html">
     
