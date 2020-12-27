@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://gmsjy.gitee.io/web/sitemap.xml
