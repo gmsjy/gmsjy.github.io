@@ -23,13 +23,6 @@
   </url>
   
   <url>
-    <loc>https://gmsjy.gitee.io/web/categories/golang/</loc>
-    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://gmsjy.gitee.io/web/post/</loc>
     <lastmod>2020-12-27T14:12:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -283,6 +276,13 @@
   
   <url>
     <loc>https://gmsjy.gitee.io/web/tags/golang/</loc>
+    <lastmod>2014-09-28T00:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://gmsjy.gitee.io/web/categories/golang/</loc>
     <lastmod>2014-09-28T00:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>

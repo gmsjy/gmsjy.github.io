@@ -8,15 +8,6 @@
     <language>zh-cn</language>
     <lastBuildDate>Sun, 27 Dec 2020 14:12:44 +0800</lastBuildDate><atom:link href="https://gmsjy.gitee.io/web/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>golang</title>
-      <link>https://gmsjy.gitee.io/web/categories/golang/</link>
-      <pubDate>Sun, 27 Dec 2020 14:12:44 +0800</pubDate>
-      
-      <guid>https://gmsjy.gitee.io/web/categories/golang/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>合集</title>
       <link>https://gmsjy.gitee.io/web/categories/%E5%90%88%E9%9B%86/</link>
       <pubDate>Sun, 27 Dec 2020 14:12:44 +0800</pubDate>
@@ -94,6 +85,15 @@
       <pubDate>Sun, 28 Sep 2014 00:00:00 +0000</pubDate>
       
       <guid>https://gmsjy.gitee.io/web/categories/development/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>golang</title>
+      <link>https://gmsjy.gitee.io/web/categories/golang/</link>
+      <pubDate>Sun, 28 Sep 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://gmsjy.gitee.io/web/categories/golang/</guid>
       <description></description>
     </item>
     
