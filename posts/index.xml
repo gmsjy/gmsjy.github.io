@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on 盲视</title>
-    <link>http://gmsjy.gitee.io/posts/</link>
+    <link>https://gmsjy.gitee.io/web/posts/</link>
     <description>Recent content in Posts on 盲视</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sun, 27 Dec 2020 12:22:27 +0800</lastBuildDate><atom:link href="http://gmsjy.gitee.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 27 Dec 2020 12:22:27 +0800</lastBuildDate><atom:link href="https://gmsjy.gitee.io/web/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>My First Post</title>
-      <link>http://gmsjy.gitee.io/posts/my-first-post/</link>
+      <link>https://gmsjy.gitee.io/web/posts/my-first-post/</link>
       <pubDate>Sun, 27 Dec 2020 12:22:27 +0800</pubDate>
       
-      <guid>http://gmsjy.gitee.io/posts/my-first-post/</guid>
+      <guid>https://gmsjy.gitee.io/web/posts/my-first-post/</guid>
       <description>哈哈哈 </description>
     </item>
     
