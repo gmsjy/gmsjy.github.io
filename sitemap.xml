@@ -16,29 +16,71 @@
   </url>
   
   <url>
-    <loc>https://gmsjy.gitee.io/web/posts/</loc>
-    <lastmod>2020-12-27T12:22:27+08:00</lastmod>
+    <loc>https://gmsjy.gitee.io/web/categories/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://gmsjy.gitee.io/web/posts/my-first-post/</loc>
-    <lastmod>2020-12-27T12:22:27+08:00</lastmod>
+    <loc>https://gmsjy.gitee.io/web/categories/golang/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://gmsjy.gitee.io/web/post/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://gmsjy.gitee.io/web/tags/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://gmsjy.gitee.io/web/tags/%E4%BA%BA%E6%B0%91%E6%97%A5%E6%8A%A5/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://gmsjy.gitee.io/web/categories/%E5%90%88%E9%9B%86/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://gmsjy.gitee.io/web/categories/%E6%8A%A5%E7%BA%B8/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://gmsjy.gitee.io/web/post/20201227/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
     <loc>https://gmsjy.gitee.io/web/</loc>
-    <lastmod>2020-12-27T12:22:27+08:00</lastmod>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://gmsjy.gitee.io/web/categories/</loc>
-    <lastmod>2019-03-05T16:01:23+08:00</lastmod>
+    <loc>https://gmsjy.gitee.io/web/tags/%E8%A7%A3%E6%94%BE%E5%86%9B%E6%8A%A5/</loc>
+    <lastmod>2020-12-27T14:12:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -79,13 +121,6 @@
   </url>
   
   <url>
-    <loc>https://gmsjy.gitee.io/web/post/</loc>
-    <lastmod>2019-03-05T16:01:23+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://gmsjy.gitee.io/web/tags/preview/</loc>
     <lastmod>2019-03-05T16:01:23+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -94,13 +129,6 @@
   
   <url>
     <loc>https://gmsjy.gitee.io/web/tags/tag-6/</loc>
-    <lastmod>2019-03-05T16:01:23+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://gmsjy.gitee.io/web/tags/</loc>
     <lastmod>2019-03-05T16:01:23+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -255,13 +283,6 @@
   
   <url>
     <loc>https://gmsjy.gitee.io/web/tags/golang/</loc>
-    <lastmod>2014-09-28T00:00:00+00:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://gmsjy.gitee.io/web/categories/golang/</loc>
     <lastmod>2014-09-28T00:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
