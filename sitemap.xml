@@ -44,13 +44,6 @@
   </url>
   
   <url>
-    <loc>https://gmsjy.gitee.io/web/post/20201227/</loc>
-    <lastmod>2020-12-28T14:12:44+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
     <loc>https://gmsjy.gitee.io/web/categories/%E6%8A%A5%E7%BA%B8/</loc>
     <lastmod>2020-12-28T14:12:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
@@ -66,6 +59,13 @@
   
   <url>
     <loc>https://gmsjy.gitee.io/web/tags/%E7%BD%91%E7%BB%9C%E5%AA%92%E4%BD%93/</loc>
+    <lastmod>2020-12-28T14:12:44+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://gmsjy.gitee.io/web/post/20201227/</loc>
     <lastmod>2020-12-28T14:12:44+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
