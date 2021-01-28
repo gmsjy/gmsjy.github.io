@@ -6,7 +6,7 @@
     <description>Recent content on 媒体看西宁</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sun, 03 Jan 2021 14:12:44 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 28 Jan 2021 14:36:20 +0800</lastBuildDate>
     
         <atom:link href="https://gmsjy.gitee.io/web/index.xml" rel="self" type="application/rss+xml" />
     
@@ -23,6 +23,22 @@
 &lt;p&gt;本站是作为知识记录分享所创建的
 记录自己的学习与思考内容&lt;/p&gt;
 &lt;/blockquote&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>Office邮件合并</title>
+      <link>https://gmsjy.gitee.io/web/post/office%E9%82%AE%E4%BB%B6%E5%90%88%E5%B9%B6/</link>
+      <pubDate>Thu, 28 Jan 2021 14:36:20 +0800</pubDate>
+      
+      <guid>https://gmsjy.gitee.io/web/post/office%E9%82%AE%E4%BB%B6%E5%90%88%E5%B9%B6/</guid>
+      
+        <description>&lt;h1 id=&#34;office邮件合并&#34;&gt;OFFICE邮件合并&lt;/h1&gt;
+&lt;blockquote&gt;
+&lt;p&gt;在工作和生活中，经常会遇到处理批量打印一些模板相同的数据材料。一般经常采用复制粘贴的方式来处理，这样做不好的地方在于一旦模板改变所有的工作都要推到重来。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src=&#34;../../images/6b4767b65257175dce008b32d9ce505aa8c75d1272244dd8f95d6a553bb8a655.png&#34; alt=&#34;图 1新建文档&#34;&gt;&lt;/p&gt;
 </description>
       
     </item>
