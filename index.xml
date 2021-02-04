@@ -6,7 +6,7 @@
     <description>Recent content on 林渊看雪</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Thu, 28 Jan 2021 14:36:20 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 04 Feb 2021 17:49:02 +0800</lastBuildDate>
     
         <atom:link href="https://gmsjy.gitee.io/web/index.xml" rel="self" type="application/rss+xml" />
     
@@ -23,6 +23,73 @@
 &lt;p&gt;本站是作为知识记录分享所创建的
 记录自己的学习与思考内容&lt;/p&gt;
 &lt;/blockquote&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>PowerToys软件</title>
+      <link>https://gmsjy.gitee.io/web/post/powertoy%E8%BD%AF%E4%BB%B6/</link>
+      <pubDate>Thu, 04 Feb 2021 17:49:02 +0800</pubDate>
+      
+      <guid>https://gmsjy.gitee.io/web/post/powertoy%E8%BD%AF%E4%BB%B6/</guid>
+      
+        <description>&lt;h2 id=&#34;简介&#34;&gt;简介&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;PowerToys是微软出品的一组开源实用程序，可以帮助用户调整和简化Windows的使用体验。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;安装和运行powertoys&#34;&gt;安装和运行PowerToys&lt;/h2&gt;
+&lt;h3 id=&#34;安装条件&#34;&gt;安装条件&lt;/h3&gt;
+&lt;p&gt;1.电脑操作系统Windows10 v1903(build 18362)之后的新系统。
+2.需要&lt;a href=&#34;https://dotnet.microsoft.com/download/dotnet-core/thank-you/runtime-desktop-3.1.11-windows-x64-installer&#34;&gt;.NET CORE 3.1 Desktop Runtime&lt;/a&gt;运行软件。&lt;/p&gt;
+&lt;h3 id=&#34;powertoys下载安装&#34;&gt;PowerToys下载安装&lt;/h3&gt;
+&lt;p&gt;从GitHub网站上下载&lt;a href=&#34;https://github.com/microsoft/PowerToys/releases/&#34;&gt;PowerToys&lt;/a&gt;安装包。&lt;/p&gt;
+&lt;p&gt;按照提示一步步安装即可。
+安装完成后，如下图所示目前最新版本是v0.31.1。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/88a1656ece162fb9556513150afe1a0a85ab2325c0c3bf809d8021c77fd20a9b.png&#34; alt=&#34;图 1&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;功能介绍&#34;&gt;功能介绍&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;截止现在PowerToys提供了8个系统增强的小工具，下面一次介绍。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&#34;color-picker颜色选择器&#34;&gt;Color Picker(颜色选择器)&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/93f471c7331838f2d659f47ccb99a00ea33fa87380daf4d6d7cc986b5b361491.png&#34; alt=&#34;图 2&#34;&gt;&lt;/p&gt;
+&lt;p&gt;使用&lt;code&gt;Win+Shift+C&lt;/code&gt;可以激活工具在屏幕任意处获取屏幕颜色值，在下边的选择器行为里面可以设置粘贴板内颜色的格式。&lt;/p&gt;
+&lt;h3 id=&#34;fancyzones&#34;&gt;FancyZones&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/f8c669e995dc0f432a881fed42156df7cce2b3ceff0132be1a48eacc000ab286.png&#34; alt=&#34;图 3&#34;&gt;&lt;/p&gt;
+&lt;p&gt;FancyZones这个功能是在桌面上分割不同的区域，用于在多任务不同窗口协作时使用。&lt;/p&gt;
+&lt;h3 id=&#34;file-explorer-add-ons文件资源管理器&#34;&gt;File Explorer add-ons(文件资源管理器)&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/0d7031a28e502705feae696cc6116567cf0e8d6c95e73694ccc6e60ab6905ec5.png&#34; alt=&#34;图 4&#34;&gt;&lt;/p&gt;
+&lt;p&gt;文件资源管理器为文件资源管理器添加了Markdown和SVG两种类型文件的预览功能。&lt;/p&gt;
+&lt;h3 id=&#34;image-resize图像大小调整&#34;&gt;Image Resize(图像大小调整)&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/df39f80abfa2d9320e2111d01db04956c915abfd341c6057624ba9d939614eee.png&#34; alt=&#34;图 5&#34;&gt;&lt;/p&gt;
+&lt;p&gt;图片大小调整用于快速调整图片大小，集成在鼠标右键上方便使用。图片调整结果可以再设置页面根据自己的需求自行设置。&lt;/p&gt;
+&lt;h3 id=&#34;keyboard-manager键盘管理器&#34;&gt;KeyBoard Manager(键盘管理器)&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/cecfd94686145f355fdc9eceb0e06be449b522d45002fabc0eb59d5c6b534d6a.png&#34; alt=&#34;图 6&#34;&gt;&lt;/p&gt;
+&lt;p&gt;键盘管理器可以方便快捷的重新配置快捷键。&lt;/p&gt;
+&lt;h3 id=&#34;powerrename强力重命名&#34;&gt;PowerRename(强力重命名)&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/918f2fc621b385e1e5e2e847ba70be2c2334a8038198999bab573c487b0c9b1e.png&#34; alt=&#34;图 7&#34;&gt;&lt;/p&gt;
+&lt;p&gt;PowerRename集成在右键的一个文件重命名工具，其强大之处在于支持正则表达式，完全满足日常文件重命名功能。&lt;/p&gt;
+&lt;h3 id=&#34;powertoys-runpowertoys启动器&#34;&gt;PowerToys Run(PowerToys启动器)&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;web/images/9841fb16c12587f8857709933c6ceda02c4b35590d76bcec5c5afc307284ffab.png&#34; alt=&#34;图 8&#34;&gt;&lt;/p&gt;
+&lt;p&gt;PowerToys Run是一个结合了Wox和Winddows Walk的快速启动器，通过&lt;code&gt;Alt+Space&lt;/code&gt;唤醒。输入关键词可以实现搜索和程序启动，快速高效。&lt;/p&gt;
+&lt;h3 id=&#34;shortcut-guide快捷键指南&#34;&gt;Shortcut Guide(快捷键指南)&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/522889b0c94f9f695bc9df9453bb0a60fa0ab70be722e888d682f94a314661e5.png&#34; alt=&#34;图 9&#34;&gt;&lt;/p&gt;
+&lt;p&gt;长按&lt;code&gt;Win&lt;/code&gt;键具体时间在设置中可以自行设置，会浮现Windows快捷键的指示图标。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/windows_help.png&#34; alt=&#34;windows Help&#34;&gt;&lt;/p&gt;
+&lt;h4 id=&#34;如果喜欢分享可以关注微信公众号我将不定期分享&#34;&gt;如果喜欢分享，可以关注微信公众号我将不定期分享&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/qrcode.jpg&#34; alt=&#34;二维码&#34;&gt;&lt;/p&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>Markdown教程</title>
+      <link>https://gmsjy.gitee.io/web/post/markdown%E6%95%99%E7%A8%8B/</link>
+      <pubDate>Sun, 31 Jan 2021 17:20:33 +0800</pubDate>
+      
+      <guid>https://gmsjy.gitee.io/web/post/markdown%E6%95%99%E7%A8%8B/</guid>
+      
+        <description>&lt;h2 id=&#34;概述&#34;&gt;概述&lt;/h2&gt;
 </description>
       
     </item>
