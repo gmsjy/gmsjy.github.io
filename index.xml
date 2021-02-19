@@ -6,7 +6,7 @@
     <description>Recent content on 林渊看雪</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Wed, 10 Feb 2021 17:20:33 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 19 Feb 2021 11:48:56 +0800</lastBuildDate>
     
         <atom:link href="https://gmsjy.gitee.io/web/index.xml" rel="self" type="application/rss+xml" />
     
@@ -23,6 +23,63 @@
 &lt;p&gt;本站是作为知识记录分享所创建的
 记录自己的学习与思考内容&lt;/p&gt;
 &lt;/blockquote&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>Golang标准库-strconv</title>
+      <link>https://gmsjy.gitee.io/web/post/golang%E6%A0%87%E5%87%86%E5%BA%93%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2/</link>
+      <pubDate>Fri, 19 Feb 2021 11:48:56 +0800</pubDate>
+      
+      <guid>https://gmsjy.gitee.io/web/post/golang%E6%A0%87%E5%87%86%E5%BA%93%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2/</guid>
+      
+        <description>&lt;h2 id=&#34;概述&#34;&gt;概述&lt;/h2&gt;
+&lt;p&gt;strconv是Golang的一个标准包，实现了基本数据类型和其字符串表示的相互转换。&lt;/p&gt;
+&lt;h3 id=&#34;字符串与布尔类型&#34;&gt;字符串与布尔类型&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;func ParseBool(str string) (value bool, err error)&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;返回布尔类型，可接受1、0、t、f、T、F、true、false、True、False、TRUE、FALSE；否则返回错误。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;func FormatBool(b bool) string&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;FormatBool 根据b的值返回 &amp;ldquo;true&amp;rdquo; 或 &amp;ldquo;false&amp;rdquo; 的字符串&lt;/p&gt;
+&lt;h3 id=&#34;字符串与整数类型&#34;&gt;字符串与整数类型&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;func ParseInt(s string, base int, bitSize int) (i int64, err error)&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;返回字符串表示的64位整数值，接受正负号。&lt;/p&gt;
+&lt;p&gt;base指定进制（2到36），如果base为0，则会从字符串前置判断，&amp;ldquo;0x&amp;quot;是16进制，&amp;ldquo;0&amp;quot;是8进制，否则是10进制；&lt;/p&gt;
+&lt;p&gt;bitSize指定结果必须能无溢出赋值的整数类型，0、8、16、32、64 分别代表 int、int8、int16、int32、int64；返回的err是*NumErr类型的，如果语法有误，err.Error = ErrSyntax；如果结果超出类型范围err.Error = ErrRange。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;func ParseUint(s string, base int, bitSize int) (uint64, error)&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;与ParseInt使用相同接受无符号整数类型。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;func Atoi(s string) (int, error)&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Atoi 是 ParseInt(s, 10, 0) 的简写。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;func FormatInt(i int64, base int) string&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;FormatInt 返回i的base进制的字符串表示，base 在 2 到36 之间。 结果中使用 &amp;lsquo;a&amp;rsquo; 到 &amp;lsquo;z&amp;rsquo; 表示大于 10 的数值&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;func FormatUint(i uint64, base int) string&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;函数同FormatInt功能相同针对无符号整数类型。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;func Itoa(i int) string&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Itoa 等同于 FormatInt(int64(i), 10)。&lt;/p&gt;
+&lt;h3 id=&#34;字符串转为浮点数&#34;&gt;字符串转为浮点数&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;func ParseFloat(s string, bitSize int) (float64, error)&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;返回浮点数数值。 指定 bitSize 大小设置精度：32 表示 float32，64 表示float64。 当 bitSize = 32 时，返回结果类型任然时 float64，但可以无损的转换为 float32。&lt;/p&gt;
+&lt;p&gt;可接受十进制和十六进制的浮点数字符串转换。 如果 s 符合规则且接近一个有效的浮点数， ParseFloat 将返回使用 IEEE754 标准四舍五入的最近浮点数。 如果解析十六进制浮点数时，只有在十六进制表示的数超过限定的位数时，就会进行舍入。&lt;/p&gt;
+&lt;p&gt;ParseFloat 返回的错误类型为 *NumError，其中 err.Num = s。&lt;/p&gt;
+&lt;p&gt;如果字符串 s 不符合转换规则， ParseFloat 返回的错误中 err.Err = ErrSyntax。&lt;/p&gt;
+&lt;p&gt;如果 s 符合转换规则，但大于浮点数限定值 1/2 ULP 时， ParseFloat 返回的错误中 f = ±Inf, err.Err = ErrRange。&lt;/p&gt;
+&lt;p&gt;ParseFloat 将字符串 &amp;ldquo;NaN&amp;rdquo; 和(可能有符号的)字符串 &amp;ldquo;Inf&amp;rdquo; 和 &amp;ldquo;Infinity&amp;rdquo; 作为它们各自的特殊浮点值。它在匹配时忽略大小写。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;func FormatFloat(f float64, fmt byte, prec, bitSize int) string&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;FormatFloat 将浮点数转换为字符串，其中 fmt 表示转换后字符串格式，prec 表示浮点数的精度。 它假设原始数据是从一个 bitSize 位浮点数获得的（32 表示 float32，64 表示 float64），从获得更加完美的值。&lt;/p&gt;
+&lt;p&gt;fmt 格式是： &amp;lsquo;b&amp;rsquo; (-ddddp±ddd, 二进制指数格式) &amp;lsquo;e&amp;rsquo; (-d.dddde±dd, 十进制指数格式), &amp;lsquo;E&amp;rsquo; (-d.ddddE±dd, 十进制指数格式), &amp;lsquo;f&amp;rsquo; (-ddd.dddd, 非指数格式), &amp;lsquo;g&amp;rsquo; (使用 &amp;lsquo;e&amp;rsquo; 对应格式表示大指数, 否则使用 &amp;lsquo;f&amp;rsquo; 对应格式表示), &amp;lsquo;G&amp;rsquo; (使用 &amp;lsquo;E&amp;rsquo; 对应格式表示大指数, 否则使用 &amp;lsquo;f&amp;rsquo; 对应格式表示), &amp;lsquo;x&amp;rsquo; (-0xd.ddddp±ddd, 十六进制分数和二进制指数格式), 或者 &amp;lsquo;X&amp;rsquo; (-0Xd.ddddP±ddd, 十六进制分数和二进制指数格式)。&lt;/p&gt;
+&lt;p&gt;精确度 prec 控制由 &amp;lsquo;e&amp;rsquo;, &amp;lsquo;E&amp;rsquo;, &amp;lsquo;f&amp;rsquo;, &amp;lsquo;g&amp;rsquo;, &amp;lsquo;G&amp;rsquo;, &amp;lsquo;x&amp;rsquo;, 和 &amp;lsquo;X&amp;rsquo; 打印的数字（不包含指数）。 对于 &amp;lsquo;g&amp;rsquo; 和 &amp;lsquo;G&amp;rsquo;，它是有效数字的最大数量（删除尾部零）。 当 prec = -1 时，则代表使用最少数量的、但又必需的数字来表示f。&lt;/p&gt;
+&lt;h3 id=&#34;字符串转为复数&#34;&gt;字符串转为复数&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;func ParseComplex(s string, bitSize int) (complex128, error)&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;函数在go版本1.15添加。&lt;/p&gt;
+&lt;p&gt;ParseComplex 返回字符串 s 表示的复数。 使用 bitSize 设置复数精度：64 表示 complex64，128 表示 complex128。 当 bitSize = 64 时，返回值类型依然为 complex128，但是可以在不改变值的情况下转换为 complex64&lt;/p&gt;
+&lt;p&gt;s 表示的数必须是 N、Ni 或 N ± Ni 的形式，其中 N 为 ParseFloat 可以识别的浮点数，i 为虚部。 如果第二个 N 是无符号的，则两个分量之间需要一个加号，用 ± 号表示。 如果第二个 N 是 NaN，则只接受一个加号。 s 中可以包含括号但是不能包含空格. 得到的复数是实部和虚部由 ParseFloat 转换得到的。&lt;/p&gt;
+&lt;p&gt;ParseComplex 返回的错误类型是 *NumError，其中 err.Num = s。 如果 s 表示的字符串不符合规则，那么 ParseComplex 返回的错误中 err.Err = ErrSyntax。&lt;/p&gt;
+&lt;p&gt;如果 s 表示的字符串符合规则，但是当 s 中实部或虚部的值大于指定浮点数限定值 1/2 ULP 时， ParseComplex 返回的错误中 err.Err = ErrRange 和 c = ±Inf。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;func FormatComplex(c complex128, fmt byte, prec, bitSize int) string&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;FormatComplex 根据 fmt 格式和精确度 prec 将复数 c 转换为 (a+bi) 的形式，其中 a 和 b 分别表示实部和虚部。&lt;/p&gt;
+&lt;p&gt;fmt 格式和精确度 prec 与 FormatFloat 中的定义相同。 它假设原始数据是从 bitSize 位的复数值中获得的，复数64必须是64，复数128必须是128。&lt;/p&gt;
+&lt;h4 id=&#34;如果喜欢分享可以关注微信公众号我将不定期分享&#34;&gt;如果喜欢分享，可以关注微信公众号我将不定期分享&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/qrcode.jpg&#34; alt=&#34;二维码&#34;&gt;&lt;/p&gt;
 </description>
       
     </item>

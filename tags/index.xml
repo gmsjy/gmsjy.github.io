@@ -6,7 +6,16 @@
     <description>Recent content in Tags on 林渊看雪</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Wed, 10 Feb 2021 17:20:33 +0800</lastBuildDate><atom:link href="https://gmsjy.gitee.io/web/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 19 Feb 2021 11:48:56 +0800</lastBuildDate><atom:link href="https://gmsjy.gitee.io/web/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>golang</title>
+      <link>https://gmsjy.gitee.io/web/tags/golang/</link>
+      <pubDate>Fri, 19 Feb 2021 11:48:56 +0800</pubDate>
+      
+      <guid>https://gmsjy.gitee.io/web/tags/golang/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>Elasticsearch</title>
       <link>https://gmsjy.gitee.io/web/tags/elasticsearch/</link>
@@ -175,15 +184,6 @@
       <pubDate>Sun, 28 Sep 2014 00:00:00 +0000</pubDate>
       
       <guid>https://gmsjy.gitee.io/web/tags/development/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>go</title>
-      <link>https://gmsjy.gitee.io/web/tags/go/</link>
-      <pubDate>Sun, 28 Sep 2014 00:00:00 +0000</pubDate>
-      
-      <guid>https://gmsjy.gitee.io/web/tags/go/</guid>
       <description></description>
     </item>
     
