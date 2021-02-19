@@ -69,7 +69,7 @@
 <meta itemprop="description" content="概述 strconv是Golang的一个标准包，实现了基本数据类型和其字符串表示的相互转换。 字符串与布尔类型 func ParseBool(str string) (value bool, err error) 返回布尔类型，可接受">
 <meta itemprop="datePublished" content="2021-02-19T11:48:56+08:00" />
 <meta itemprop="dateModified" content="2021-02-19T11:48:56+08:00" />
-<meta itemprop="wordCount" content="1799">
+<meta itemprop="wordCount" content="1798">
 
 
 
@@ -462,7 +462,7 @@
 <p>Itoa 等同于 FormatInt(int64(i), 10)。</p>
 <h3 id="字符串转为浮点数">字符串转为浮点数</h3>
 <p><code>func ParseFloat(s string, bitSize int) (float64, error)</code></p>
-<p>返回浮点数数值。 指定 bitSize 大小设置精度：32 表示 float32，64 表示float64。 当 bitSize = 32 时，返回结果类型仍然为 float64，但可以无损的转换为 float32。</p>
+<p>返回浮点数数值。 指定 bitSize 大小设置精度：32 表示 float32，64 表示float64。 当 bitSize = 32 时，返回结果类型为 float64时，也可以无损的转换为 float32。</p>
 <p>可接受十进制和十六进制的浮点数字符串转换。 如果 s 符合规则且接近一个有效的浮点数， ParseFloat 将返回使用 IEEE754 标准四舍五入的最近浮点数。 如果解析十六进制浮点数时，只有在十六进制表示的数超过限定的位数时，就会进行舍入。</p>
 <p>ParseFloat 返回的错误类型为 *NumError，其中 err.Num = s。</p>
 <p>如果字符串 s 不符合转换规则， ParseFloat 返回的错误中 err.Err = ErrSyntax。</p>
