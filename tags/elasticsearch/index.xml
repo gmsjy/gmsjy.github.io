@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Elasticsearch on 林渊看雪</title>
+    <link>https://gmsjy.gitee.io/web/tags/elasticsearch/</link>
+    <description>Recent content in Elasticsearch on 林渊看雪</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Wed, 10 Feb 2021 17:20:33 +0800</lastBuildDate><atom:link href="https://gmsjy.gitee.io/web/tags/elasticsearch/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Elasticsearch安装与使用</title>
+      <link>https://gmsjy.gitee.io/web/post/elasticsearch%E5%AE%89%E8%A3%85%E4%B8%8E%E4%BD%BF%E7%94%A8/</link>
+      <pubDate>Wed, 10 Feb 2021 17:20:33 +0800</pubDate>
+      
+      <guid>https://gmsjy.gitee.io/web/post/elasticsearch%E5%AE%89%E8%A3%85%E4%B8%8E%E4%BD%BF%E7%94%A8/</guid>
+      <description>概述 Elasticsearch是目前全文搜索引擎的首选。它可以快速地储存、搜索和分析海量数据。其底层开源库是Lucene，Elasticse</description>
+    </item>
+    
+  </channel>
+</rss>
