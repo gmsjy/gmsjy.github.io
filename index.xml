@@ -6,7 +6,7 @@
     <description>Recent content on 林渊看雪</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Fri, 19 Feb 2021 11:48:56 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 16 Apr 2021 15:15:39 +0800</lastBuildDate>
     
         <atom:link href="https://gmsjy.gitee.io/web/index.xml" rel="self" type="application/rss+xml" />
     
@@ -23,6 +23,43 @@
 &lt;p&gt;本站是作为知识记录分享所创建的
 记录自己的学习与思考内容&lt;/p&gt;
 &lt;/blockquote&gt;
+</description>
+      
+    </item>
+    
+    <item>
+      <title>通过docker构建镜像搭建办公协作平台</title>
+      <link>https://gmsjy.gitee.io/web/post/2021%E5%B9%B4%E9%80%9A%E8%BF%87docker%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F%E6%90%AD%E5%BB%BA%E5%8A%9E%E5%85%AC%E5%8D%8F%E4%BD%9C%E5%B9%B3%E5%8F%B0/</link>
+      <pubDate>Fri, 16 Apr 2021 15:15:39 +0800</pubDate>
+      
+      <guid>https://gmsjy.gitee.io/web/post/2021%E5%B9%B4%E9%80%9A%E8%BF%87docker%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F%E6%90%AD%E5%BB%BA%E5%8A%9E%E5%85%AC%E5%8D%8F%E4%BD%9C%E5%B9%B3%E5%8F%B0/</guid>
+      
+        <description>&lt;h2 id=&#34;概述&#34;&gt;概述&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;环境&#34;&gt;环境&lt;/h2&gt;
+&lt;p&gt;操作系统：windows10专业版&lt;/p&gt;
+&lt;p&gt;PHP环境：dzzoffice搭建在PHPStudy版本8.1.1.2&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/782411d054ee6847420d586b1ec1e2a64702219e057b7f488f422188e971b46e.png&#34; alt=&#34;图 1&#34;&gt;&lt;/p&gt;
+&lt;p&gt;搭建成功注册后安装号onlyoffice插件，如下图&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/df1b2eeccd6ccd1db8fbcf1bf62c185e475e4cf0e44301306b735ce8c08beff8.png&#34; alt=&#34;图 1&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/d5a07c00b73a35e4b89bf03b5036dc60170189edd1aff5cd8261766f5e42ffc6.png&#34; alt=&#34;图 2&#34;&gt;&lt;/p&gt;
+&lt;p&gt;就绪后配置onlyoffice的服务接口&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/92f56ddd472f3ca01bbecd5e8c40471dc6bc19f59f6214e7162f1390fdb2fa9c.png&#34; alt=&#34;图 3&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;docker镜像&#34;&gt;docker镜像&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://hub.docker.com/r/alehoho/oo-ce-docker-license&#34;&gt;alehoho/oo-ce-docker-license&lt;/a&gt;镜像根据社区版onlyoffice修改许可证限制编译而成，增加了手机端适配，在后期我又增加了中文字体设置了中文字号。修改的镜像地址在&lt;a href=&#34;https://hub.docker.com/layers/gmsjy/onlyoffice/v6.2.0/images/sha256:97d4a54b5776ed27d1b716306cba00c1b1249c0430a0c6138eb4322078b707b9&#34;&gt;gmsjy/onlyoffice:v6.2.0&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/268d72b1803a6422b5008520a18a32cccdf76965e330730fb1e9fa47c3afb3b1.png&#34; alt=&#34;图 4&#34;&gt;&lt;/p&gt;
+&lt;p&gt;详细的dockerfile大家可以参见&lt;a href=&#34;https://gitee.com/gmsjy/onlyofficewithchinesefonts.git&#34;&gt;onlyofficewithchinesefonts&lt;/a&gt;,如果有什么问题或是建议大家可以即时反馈。&lt;/p&gt;
+&lt;h2 id=&#34;使用效果&#34;&gt;使用效果&lt;/h2&gt;
+&lt;p&gt;文档打开效果&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/359d98d236bf0a5b657eed9be81ebab2d39e9c80ea9857a7612b3958fa8d5b34.png&#34; alt=&#34;图 5&#34;&gt;&lt;/p&gt;
+&lt;p&gt;增加汉字字体&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/3c7c20c2aa014b44efecf8637b8f7eb9daf0df078a380e772f758e492dc6cd08.png&#34; alt=&#34;图 6&#34;&gt;&lt;/p&gt;
+&lt;p&gt;增加汉字字号&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/203ab87716406b4a40236b6e00e2883714c3f3ce3f22bf6eeeb6c2bff6ad6699.png&#34; alt=&#34;图 7&#34;&gt;&lt;/p&gt;
+&lt;h4 id=&#34;如果喜欢分享可以关注微信公众号我将不定期分享&#34;&gt;如果喜欢分享，可以关注微信公众号我将不定期分享&lt;/h4&gt;
+&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/qrcode.jpg&#34; alt=&#34;二维码&#34;&gt;&lt;/p&gt;
 </description>
       
     </item>
