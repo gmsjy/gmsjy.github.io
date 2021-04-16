@@ -69,7 +69,7 @@
 <meta itemprop="description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作。 环境 操作系统：windows10专业版 PHP环境：dzzoff">
 <meta itemprop="datePublished" content="2021-04-16T15:15:39+08:00" />
 <meta itemprop="dateModified" content="2021-04-16T15:15:39+08:00" />
-<meta itemprop="wordCount" content="376">
+<meta itemprop="wordCount" content="390">
 
 
 
@@ -453,7 +453,9 @@
 <p><img src="/web/images/92f56ddd472f3ca01bbecd5e8c40471dc6bc19f59f6214e7162f1390fdb2fa9c.png" alt="图 3"></p>
 <h2 id="docker镜像">docker镜像</h2>
 <p><a href="https://hub.docker.com/r/alehoho/oo-ce-docker-license">alehoho/oo-ce-docker-license</a>镜像根据社区版onlyoffice修改许可证限制编译而成，增加了手机端适配，在后期我又增加了中文字体设置了中文字号。修改的镜像地址在<a href="https://hub.docker.com/layers/gmsjy/onlyoffice/v6.2.0/images/sha256:97d4a54b5776ed27d1b716306cba00c1b1249c0430a0c6138eb4322078b707b9">gmsjy/onlyoffice:v6.2.0</a>。</p>
-<p><img src="/web/images/268d72b1803a6422b5008520a18a32cccdf76965e330730fb1e9fa47c3afb3b1.png" alt="图 4"></p>
+<p>运行docker</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run --name<span style="color:#f92672">=</span>onlyoffice --detach  --publish<span style="color:#f92672">=</span>80:80  gmsjy/onlyoffice:v6.2.0 
+</code></pre></div><p><img src="/web/images/268d72b1803a6422b5008520a18a32cccdf76965e330730fb1e9fa47c3afb3b1.png" alt="图 4"></p>
 <p>详细的dockerfile大家可以参见<a href="https://gitee.com/gmsjy/onlyofficewithchinesefonts.git">onlyofficewithchinesefonts</a>,如果有什么问题或是建议大家可以即时反馈。</p>
 <h2 id="使用效果">使用效果</h2>
 <p>文档打开效果</p>

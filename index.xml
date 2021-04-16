@@ -49,7 +49,9 @@
 &lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/92f56ddd472f3ca01bbecd5e8c40471dc6bc19f59f6214e7162f1390fdb2fa9c.png&#34; alt=&#34;图 3&#34;&gt;&lt;/p&gt;
 &lt;h2 id=&#34;docker镜像&#34;&gt;docker镜像&lt;/h2&gt;
 &lt;p&gt;&lt;a href=&#34;https://hub.docker.com/r/alehoho/oo-ce-docker-license&#34;&gt;alehoho/oo-ce-docker-license&lt;/a&gt;镜像根据社区版onlyoffice修改许可证限制编译而成，增加了手机端适配，在后期我又增加了中文字体设置了中文字号。修改的镜像地址在&lt;a href=&#34;https://hub.docker.com/layers/gmsjy/onlyoffice/v6.2.0/images/sha256:97d4a54b5776ed27d1b716306cba00c1b1249c0430a0c6138eb4322078b707b9&#34;&gt;gmsjy/onlyoffice:v6.2.0&lt;/a&gt;。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/268d72b1803a6422b5008520a18a32cccdf76965e330730fb1e9fa47c3afb3b1.png&#34; alt=&#34;图 4&#34;&gt;&lt;/p&gt;
+&lt;p&gt;运行docker&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;docker run --name&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;onlyoffice --detach  --publish&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;80:80  gmsjy/onlyoffice:v6.2.0 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://gmsjy.gitee.io/web/web/images/268d72b1803a6422b5008520a18a32cccdf76965e330730fb1e9fa47c3afb3b1.png&#34; alt=&#34;图 4&#34;&gt;&lt;/p&gt;
 &lt;p&gt;详细的dockerfile大家可以参见&lt;a href=&#34;https://gitee.com/gmsjy/onlyofficewithchinesefonts.git&#34;&gt;onlyofficewithchinesefonts&lt;/a&gt;,如果有什么问题或是建议大家可以即时反馈。&lt;/p&gt;
 &lt;h2 id=&#34;使用效果&#34;&gt;使用效果&lt;/h2&gt;
 &lt;p&gt;文档打开效果&lt;/p&gt;
