@@ -23,7 +23,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <meta name="author" content="gmsjy" />
-  <meta name="description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作。 环境 操作系统：windows10专业版 PHP环境：dzzoff" />
+  <meta name="description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作,适合小公司自己局域网内部办公协作使用。 环境 操作系统：windo" />
 
   <meta name="keywords" content="Hugo, theme, jane" />
 
@@ -60,23 +60,23 @@
 
 
 <meta property="og:title" content="通过docker构建镜像搭建办公协作平台" />
-<meta property="og:description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作。 环境 操作系统：windows10专业版 PHP环境：dzzoff" />
+<meta property="og:description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作,适合小公司自己局域网内部办公协作使用。 环境 操作系统：windo" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://gmsjy.gitee.io/web/post/2021%E5%B9%B4%E9%80%9A%E8%BF%87docker%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F%E6%90%AD%E5%BB%BA%E5%8A%9E%E5%85%AC%E5%8D%8F%E4%BD%9C%E5%B9%B3%E5%8F%B0/" />
 <meta property="article:published_time" content="2021-04-16T15:15:39+08:00" />
 <meta property="article:modified_time" content="2021-04-16T15:15:39+08:00" />
 <meta itemprop="name" content="通过docker构建镜像搭建办公协作平台">
-<meta itemprop="description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作。 环境 操作系统：windows10专业版 PHP环境：dzzoff">
+<meta itemprop="description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作,适合小公司自己局域网内部办公协作使用。 环境 操作系统：windo">
 <meta itemprop="datePublished" content="2021-04-16T15:15:39+08:00" />
 <meta itemprop="dateModified" content="2021-04-16T15:15:39+08:00" />
-<meta itemprop="wordCount" content="388">
+<meta itemprop="wordCount" content="467">
 
 
 
 <meta itemprop="keywords" content="docker,onlyoffcie," />
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="通过docker构建镜像搭建办公协作平台"/>
-<meta name="twitter:description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作。 环境 操作系统：windows10专业版 PHP环境：dzzoff"/>
+<meta name="twitter:description" content="概述 网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作,适合小公司自己局域网内部办公协作使用。 环境 操作系统：windo"/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -440,7 +440,7 @@
     <div class="post-content">
       <h2 id="概述">概述</h2>
 <blockquote>
-<p>网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作。</p>
+<p>网盘采用dzzoffice搭建，配合onlyoffice插件实现办公协作,适合小公司自己局域网内部办公协作使用。</p>
 </blockquote>
 <h2 id="环境">环境</h2>
 <p>操作系统：windows10专业版</p>
@@ -454,15 +454,23 @@
 <h2 id="docker镜像">docker镜像</h2>
 <p><a href="https://hub.docker.com/r/alehoho/oo-ce-docker-license">alehoho/oo-ce-docker-license</a>镜像根据社区版onlyoffice修改许可证限制编译而成，增加了手机端适配，在后期我又增加了中文字体设置了中文字号。修改的镜像地址在<a href="https://hub.docker.com/layers/gmsjy/onlyoffice/v6.2.0/images/sha256:97d4a54b5776ed27d1b716306cba00c1b1249c0430a0c6138eb4322078b707b9">gmsjy/onlyoffice:v6.2.0</a>。</p>
 <p>运行docker</p>
+<p>Docker CLI</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run --name<span style="color:#f92672">=</span>onlyoffice --detach  --publish<span style="color:#f92672">=</span>80:80  gmsjy/onlyoffice:v6.2.0 
+</code></pre></div><p>docker-compose.yml</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">services:
+  onlyoffice:
+    container_name: onlyoffice
+    image: gmsjy/onlyoffice:v6.2.0 
+    ports:
+      - <span style="color:#e6db74">&#34;80&#34;</span>
 </code></pre></div><p><img src="/web/images/268d72b1803a6422b5008520a18a32cccdf76965e330730fb1e9fa47c3afb3b1.png" alt="图 4"></p>
 <p>详细的dockerfile大家可以参见<a href="https://gitee.com/gmsjy/onlyofficewithchinesefonts.git">onlyofficewithchinesefonts</a>,如果有什么问题或是建议大家可以即时反馈。</p>
 <h2 id="使用效果">使用效果</h2>
-<p>文档打开效果</p>
+<p>文档打开效果如下：</p>
 <p><img src="/web/images/359d98d236bf0a5b657eed9be81ebab2d39e9c80ea9857a7612b3958fa8d5b34.png" alt="图 5"></p>
-<p>增加汉字字体</p>
+<p>我增加了宋体、仿宋、方正小标宋简体、楷体、黑体、微软雅黑等常用汉字字体</p>
 <p><img src="/web/images/3c7c20c2aa014b44efecf8637b8f7eb9daf0df078a380e772f758e492dc6cd08.png" alt="图 6"></p>
-<p>增加汉字字号</p>
+<p>删除了用字体磅数表示字体，增加汉字字号的表达</p>
 <p><img src="/web/images/203ab87716406b4a40236b6e00e2883714c3f3ce3f22bf6eeeb6c2bff6ad6699.png" alt="图 7"></p>
 <h4 id="如果喜欢可以关注微信公众号我将不定期分享">如果喜欢，可以关注微信公众号我将不定期分享</h4>
 <p><img src="/web/images/qrcode.jpg" alt="二维码"></p>
