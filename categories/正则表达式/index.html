@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Office邮件合并 - 林渊看雪</title>
+  <title>正则表达式 · 林渊看雪</title>
   
 
 <meta name="renderer" content="webkit" />
@@ -23,8 +23,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <meta name="author" content="gmsjy" />
-  <meta name="description" content="在工作和生活中，经常会遇到处理批量打印一些模板相同的数据材料。一般经常采用复制粘贴的方式来处理，这样做不好的地方在于一旦模板改变所有的工作都" />
-
+  <meta name="description" content="GMSJY 的小破站." />
   <meta name="keywords" content="Hugo, theme, jane" />
 
 
@@ -35,8 +34,8 @@
 <meta name="generator" content="Hugo 0.80.0" />
 
 
-<link rel="canonical" href="https://gmsjy.gitee.io/web/post/office%E9%82%AE%E4%BB%B6%E5%90%88%E5%B9%B6/" />
-
+<link rel="canonical" href="https://gmsjy.gitee.io/web/categories/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/" />
+<link href="/web/categories/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/index.xml" rel="alternate" type="application/rss+xml" title="林渊看雪" />
 
 
 
@@ -59,24 +58,16 @@
 
 
 
-<meta property="og:title" content="Office邮件合并" />
-<meta property="og:description" content="在工作和生活中，经常会遇到处理批量打印一些模板相同的数据材料。一般经常采用复制粘贴的方式来处理，这样做不好的地方在于一旦模板改变所有的工作都" />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="https://gmsjy.gitee.io/web/post/office%E9%82%AE%E4%BB%B6%E5%90%88%E5%B9%B6/" />
-<meta property="article:published_time" content="2021-01-28T14:36:20+08:00" />
-<meta property="article:modified_time" content="2021-01-28T14:36:20+08:00" />
-<meta itemprop="name" content="Office邮件合并">
-<meta itemprop="description" content="在工作和生活中，经常会遇到处理批量打印一些模板相同的数据材料。一般经常采用复制粘贴的方式来处理，这样做不好的地方在于一旦模板改变所有的工作都">
-<meta itemprop="datePublished" content="2021-01-28T14:36:20+08:00" />
-<meta itemprop="dateModified" content="2021-01-28T14:36:20+08:00" />
-<meta itemprop="wordCount" content="506">
-
-
-
-<meta itemprop="keywords" content="办公助手," />
+<meta property="og:title" content="正则表达式" />
+<meta property="og:description" content="GMSJY 的小破站." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://gmsjy.gitee.io/web/categories/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/" />
+<meta property="og:updated_time" content="2021-05-20T11:54:09+08:00" />
+<meta itemprop="name" content="正则表达式">
+<meta itemprop="description" content="GMSJY 的小破站.">
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Office邮件合并"/>
-<meta name="twitter:description" content="在工作和生活中，经常会遇到处理批量打印一些模板相同的数据材料。一般经常采用复制粘贴的方式来处理，这样做不好的地方在于一旦模板改变所有的工作都"/>
+<meta name="twitter:title" content="正则表达式"/>
+<meta name="twitter:description" content="GMSJY 的小破站."/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -392,151 +383,55 @@
     <main id="main" class="main bg-llight">
       <div class="content-wrapper">
         <div id="content" class="content container">
-          <article class="post bg-white">
-    
-    <header class="post-header">
-      <h1 class="post-title">Office邮件合并</h1>
-      
-      <div class="post-meta">
-        <time datetime="2021-01-28" class="post-time">
-          2021-01-28
-        </time>
-        <div class="post-category">
-            <a href="https://gmsjy.gitee.io/web/categories/office/"> office </a>
-            <a href="https://gmsjy.gitee.io/web/categories/%E9%82%AE%E4%BB%B6%E5%90%88%E5%B9%B6/"> 邮件合并 </a>
-            
-          </div>
-        
-
-        
-        
-
-        
-        
-      </div>
-    </header>
-
-    
-    
-<div class="post-toc" id="post-toc">
-  <h2 class="post-toc-title">文章目录</h2>
-  <div class="post-toc-content">
-    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#模板建立">模板建立</a></li>
-    <li><a href="#邮件合并">邮件合并</a>
-      <ul>
-        <li><a href="#数据源编写">数据源编写</a></li>
-        <li><a href="#word邮件合并">word邮件合并</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-  </div>
-</div>
-
-    
-    <div class="post-content">
-      <blockquote>
-<p>在工作和生活中，经常会遇到处理批量打印一些模板相同的数据材料。一般经常采用复制粘贴的方式来处理，这样做不好的地方在于一旦模板改变所有的工作都要推到重来这时候能够批量化处理就显得很重要,邮件合并就能很好的解决这个问题。</p>
-</blockquote>
-<p>邮件合并需要建立模板，根据个人需要制作不同的模板。</p>
-<p>在文件夹内建立两个文件，其一是模板文件，其二是数据文件。</p>
-<h2 id="模板建立">模板建立</h2>
-<p><img src="/web/images/6b4767b65257175dce008b32d9ce505aa8c75d1272244dd8f95d6a553bb8a655.png" alt="图 1建立模板文件"></p>
-<p>下面以奖状为例，来讲解一下使用</p>
-<p>xx的位置在合并后会被真实数据取代</p>
-<p><img src="/web/images/55d59c70754b8e35c6f7260e14a5011ac7f3b82db2c9b0da3c591b9dd770dbe2.png" alt="图 2模板文件"></p>
-<h2 id="邮件合并">邮件合并</h2>
-<p>进行邮件合并前，首先要确定数据源。</p>
-<p>word邮件合并的数据源大致分为两类，新建列表和现有列表。选择新建列表，自己创建列表。列表文件将会以数据库（.mdb)的形式存在。现有列表则分为三类Excel电子表格、Access数据库和其他数据库文件，这里我选择Excel电子表格做演示。</p>
-<h3 id="数据源编写">数据源编写</h3>
-<p>在这里我编了一份数据用作生成奖状。</p>
-<p><img src="/web/images/2c1e04ae8c9393ca937b50fa31826493ff5ecb4efe177850b787006cb8aa6dfb.png" alt="图 3"></p>
-<h3 id="word邮件合并">word邮件合并</h3>
-<p>word的邮件合并包括信函、电子邮件、信封、标签、目录等几个功能，之后会对这几个功能进行详细介绍，这里选用信函功能来实现批量生成功能。</p>
-<p>1.选择信函功能</p>
-<p><img src="/web/images/c59901cec8e7c81b123e177a64ed07e8dc1b9c8c2854690b577c3159ab35cd91.png" alt="图 4"></p>
-<p>2.选择现有列表</p>
-<p><img src="/web/images/7fd96c5cd0d0491e9b6ecf8c74324d9ab099b3433678cfd4ec565715173eb1ba.png" alt="图 5"></p>
-<p>3.选中数据源excel</p>
-<p><img src="/web/images/6685fca63e5113ff3733b384029e89fad9463a30fc9f8e98cf03c9e4ac090064.png" alt="图 6"></p>
-<p>4.插入数据合并域</p>
-<p><img src="/web/images/14fd645ae36ed33b6fc9a6354eaef22d30a225a6431b7a1e94cce70bb4f79252.png" alt="图 7"></p>
-<p>5.选择完成合并中的编辑单个文档。</p>
-<p><img src="/web/images/2af4eedad72fdda17abf5fc512ceeb5e4b0d5298e4ea5e0c77f98e072c8907fa.png" alt="图 8"></p>
-<p>6.选择全部数据就完成了奖状生成。</p>
-<p><img src="/web/images/f81a04365c0c262bd5ce14d82a802bcb86b02efd414d90ffa4b9edcd636c4a71.png" alt="图 9"></p>
-
-    </div>
-
-    
-    
-
-
-    
-    
-
-    <footer class="post-footer">
-      <div class="post-tags">
-          <a href="https://gmsjy.gitee.io/web/tags/%E5%8A%9E%E5%85%AC%E5%8A%A9%E6%89%8B/">办公助手</a>
           
-        </div>
 
-      
-      <nav class="post-nav">
-        
-          <a class="prev" href="/web/post/markdown%E6%95%99%E7%A8%8B/">
-            
-            <i class="iconfont">
-              <svg  class="icon" viewBox="0 0 1024 1024" version="1.1"
-  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-  width="18" height="18">
-  <path d="M691.908486 949.511495l75.369571-89.491197c10.963703-12.998035 10.285251-32.864502-1.499144-44.378743L479.499795 515.267417 757.434875 204.940602c11.338233-12.190647 11.035334-32.285311-0.638543-44.850487l-80.46666-86.564541c-11.680017-12.583596-30.356378-12.893658-41.662889-0.716314L257.233596 494.235404c-11.332093 12.183484-11.041474 32.266891 0.657986 44.844348l80.46666 86.564541c1.772366 1.910513 3.706415 3.533476 5.750981 4.877077l306.620399 321.703933C662.505829 963.726242 680.945807 962.528973 691.908486 949.511495z"></path>
-</svg>
-
-            </i>
-            <span class="prev-text nav-default">Markdown教程</span>
-            <span class="prev-text nav-mobile">上一篇</span>
-          </a>
-        
-          <a class="next" href="/web/post/math-preview/">
-            <span class="next-text nav-default">Math Preview</span>
-            <span class="prev-text nav-mobile">下一篇</span>
-            
-            <i class="iconfont">
-              <svg class="icon" viewBox="0 0 1024 1024" version="1.1"
-  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-  width="18" height="18">
-  <path d="M332.091514 74.487481l-75.369571 89.491197c-10.963703 12.998035-10.285251 32.864502 1.499144 44.378743l286.278095 300.375162L266.565125 819.058374c-11.338233 12.190647-11.035334 32.285311 0.638543 44.850487l80.46666 86.564541c11.680017 12.583596 30.356378 12.893658 41.662889 0.716314l377.434212-421.426145c11.332093-12.183484 11.041474-32.266891-0.657986-44.844348l-80.46666-86.564541c-1.772366-1.910513-3.706415-3.533476-5.750981-4.877077L373.270379 71.774697C361.493148 60.273758 343.054193 61.470003 332.091514 74.487481z"></path>
-</svg>
-
-            </i>
-          </a>
-      </nav>
-    </footer>
-  </article>
-
+<section id="archive" class="archive">
   
-  
-
-  
-  
-
-  
-
-  
-  
-
-  
-
-  
-
-  
-
     
+      <div class="archive-title category">
+        <h2 class="archive-name">分类： 正则表达式</h2>
+      </div>
+    
+  
 
   
+    <div class="archive-post">
+      <time datetime="2021-05-20" class="archive-post-time">
+        2021-05-20
+      </time>
+      <span class="archive-post-title">
+        <a href="/web/post/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F/" class="archive-post-link">
+          正则表达式
+        </a>
+      </span>
+    </div>
+  
+</section>
+
+
+
+
+
+
+  
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+
+
 
         </div>
       </div>
