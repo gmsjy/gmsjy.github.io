@@ -592,3 +592,18 @@ main > h2 {
 
 /* ============ 渲染辅助 class（保留兼容） ============ */
 .hidden { display: none; }
+/* ============ 窄屏适配（≤640px 手机）============ */
+@media (max-width: 640px) {
+  main { padding: 2rem 1rem 3rem; }
+  article svg { max-width: 100%; height: auto; }
+  article table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
+  article pre { font-size: 0.8rem; }
+  article div[data-equation="block"] { flex-direction: column; }
+  article div[data-equation="block"] > span.eq-num {
+    position: static; transform: none; align-self: flex-end; margin-top: 0.2rem;
+  }
+  article h1 { font-size: 1.6rem; }
+  /* 卡片内边距收窄，圆角阴影保留 */
+  .post-item { padding: 0.95rem 1rem; }
+  .post-title { font-size: 1.15rem; }
+}

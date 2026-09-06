@@ -592,6 +592,22 @@ main > h2 {
 
 /* ============ 渲染辅助 class（保留兼容） ============ */
 .hidden { display: none; }
+/* ============ 窄屏适配（≤640px 手机）============ */
+@media (max-width: 640px) {
+  main { padding: 1.8rem 1rem 3rem; }
+  article svg { max-width: 100%; height: auto; }
+  article table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  article pre { font-size: 0.8rem; }
+  article div[data-equation="block"] { flex-direction: column; }
+  article div[data-equation="block"] > span.eq-num {
+    position: static; transform: none; align-self: flex-end; margin-top: 0.2rem;
+  }
+  article h1 { font-size: 1.45rem; }
+  article h2::before { content: none; }   /* 窄屏收起 # 前缀，省横向空间 */
+  article h3::before { content: none; }
+  .post-title { font-size: 1.05rem; }
+  .site-title { font-size: 1.05rem; }
+}
 
 /* ============================================================
    代码高亮重配：typst 默认 token 色为亮色主题设计，

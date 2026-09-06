@@ -586,6 +586,26 @@ main > h2 {
 
 /* ============ 渲染辅助 class（保留兼容） ============ */
 .hidden { display: none; }
+
+/* ============ 窄屏适配（≤640px 手机）============ */
+@media (max-width: 640px) {
+  main { padding: 1.8rem 1rem 3rem; }
+  /* 插图 SVG 带固定 pt 宽度，无约束会横向溢出 */
+  article svg { max-width: 100%; height: auto; }
+  /* 宽表格横向滚动，不撑破版面 */
+  article table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  article pre { font-size: 0.8rem; }
+  /* 块级公式编号改为公式下方右对齐，避免与公式重叠 */
+  article div[data-equation="block"] { flex-direction: column; }
+  article div[data-equation="block"] > span.eq-num {
+    position: static;
+    transform: none;
+    align-self: flex-end;
+    margin-top: 0.2rem;
+  }
+  article h1 { font-size: 1.6rem; }
+  .post-title { font-size: 1.2rem; }
+}
 "#;
 
 
