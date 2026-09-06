@@ -38,6 +38,7 @@ base64 = "0.22"
 tar = "0.4"
 resvg = "0.45"
 tera = "1"
+qrcodegen = "1.8.0"
 
 [dev-dependencies]
 tempfile = "3"

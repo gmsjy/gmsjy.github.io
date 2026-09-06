@@ -39,6 +39,10 @@ pub(crate) struct SeoInfo<'a> {
     /// 分享图绝对 URL（og:image / twitter 卡升级 large）。仅文章页携带，
     /// `None` 维持无图卡片（`summary`）。
     og_image: Option<&'a str>,
+    /// 文章发布日期（JSON-LD datePublished），仅文章页携带。
+    date: Option<&'a str>,
+    /// 最后更新日期（JSON-LD dateModified），仅文章页携带。
+    updated: Option<&'a str>,
 }
 
 /// 渲染完整页面（统一包装，避免每处重复拼 PageContext）。
@@ -61,7 +65,7 @@ pub(crate) fn page(
 ) -> anyhow::Result<String> {
     let (path, og_type) = seo.map(|s| (s.path, s.og_type)).unwrap_or(("", ""));
     let seo_head = seo
-        .map(|s| build_seo_head(config, s.path, s.og_type, title, s.description, s.og_image))
+        .map(|s| build_seo_head(config, s.path, s.og_type, title, s.description, s.og_image, s.date, s.updated))
         .unwrap_or_default();
     theme::render_page(
         theme,
@@ -92,6 +96,7 @@ pub(crate) fn page(
 ///
 /// 站点未配置 `site.url` 时返回空串（整块省略，避免输出残缺标签）；
 /// `description` 为空串时回退站点描述。
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn build_seo_head(
     config: &Config,
     path: &str,
@@ -99,6 +104,8 @@ pub(crate) fn build_seo_head(
     title: &str,
     description: &str,
     og_image: Option<&str>,
+    date: Option<&str>,
+    updated: Option<&str>,
 ) -> String {
     let url = config.site.url.trim();
     if url.is_empty() {
@@ -113,12 +120,14 @@ pub(crate) fn build_seo_head(
     };
     let (image_tag, card) = match og_image {
         Some(img) => (
-            format!("\n<meta property=\"og:image\" content=\"{}\">", theme::escape(img)),
+            format!(
+                r#"<meta property="og:image" content="{img}">"#
+            ),
             "summary_large_image",
         ),
         None => (String::new(), "summary"),
     };
-    format!(
+    let mut head = format!(
         r#"<link rel="canonical" href="{canonical}">
 <meta property="og:type" content="{og_type}">
 <meta property="og:title" content="{title}">
@@ -131,7 +140,41 @@ pub(crate) fn build_seo_head(
         desc = theme::escape(desc),
         image_tag = image_tag,
         card = card,
-    )
+    );
+
+    // JSON-LD 结构化数据（文章页）：供搜索引擎富摘要
+    if og_type == "article" {
+        let mut fields: Vec<String> = vec![
+            r#""@context": "https://schema.org""#.to_string(),
+            r#""@type": "BlogPosting""#.to_string(),
+        ];
+        fields.push(format!(r#""headline": {}"#, json_escape(title)));
+        fields.push(format!(r#""url": {}"#, json_escape(&canonical)));
+        fields.push(format!(
+            r#""author": {{"@type": "Person", "name": "{}"}}"#,
+            json_escape(&config.site.author)
+        ));
+        fields.push(format!(r#""description": {}"#, json_escape(desc)));
+        if let Some(d) = date {
+            fields.push(format!(r#""datePublished": {}"#, json_escape(d)));
+        }
+        if let Some(u) = updated {
+            fields.push(format!(r#""dateModified": {}"#, json_escape(u)));
+        }
+        if let Some(img) = og_image {
+            fields.push(format!(r#""image": {}"#, json_escape(img)));
+        }
+        head.push('\n');
+        head.push_str(r#"<script type="application/ld+json">{"#);
+        head.push_str(&fields.join(","));
+        head.push_str("}</script>");
+    }
+    head
+}
+
+/// JSON 字符串转义：复用 serde_json 的字符串序列化（引号/控制符/Unicode 转义全部正确）。
+fn json_escape(s: &str) -> String {
+    serde_json::to_string(s).unwrap_or_default()
 }
 
 /// 生成别名跳转页（`aliases` 旧地址 → 新文章地址）。
@@ -220,7 +263,7 @@ pub(crate) fn render_index(
     let pagination = render_pagination(theme, page_num, total_pages)?;
     let body = format!("{}{}", list, pagination);
     let path = if page_num == 1 { "/" } else { &format!("/page/{}/", page_num) };
-    let seo = SeoInfo { path, og_type: "website", description: "", og_image: None };
+    let seo = SeoInfo { path, og_type: "website", description: "", og_image: None, date: None, updated: None };
     let summaries = post_summaries(&refs);
     page(theme, config, "", &body, "", nav, Some(&seo), None, page_num, total_pages, &summaries)
 }
@@ -380,7 +423,10 @@ pub(crate) fn render_article(
         raw: &raw,
     };
     let og_image = og_image_for(doc, config);
-    let seo = SeoInfo { path: &path, og_type: "article", description: &excerpt, og_image: og_image.as_deref() };
+    let seo = SeoInfo { path: &path, og_type: "article", description: &excerpt, og_image: og_image.as_deref(),
+        date: doc.meta.date.as_deref(),
+        updated: doc.meta.updated.as_deref(),
+    };
     page(theme, config, &title, &body, &doc.math_style, nav, Some(&seo), Some(post), 1, 1, &[])
 }
 
@@ -654,7 +700,7 @@ pub(crate) fn generate_collections(
     // 标签云 + 每个标签页
     if !tags.is_empty() {
         let cloud = render_cloud(theme, "标签", "tags", &tags)?;
-        let seo = SeoInfo { path: "/tags/", og_type: "website", description: "", og_image: None };
+        let seo = SeoInfo { path: "/tags/", og_type: "website", description: "", og_image: None, date: None, updated: None };
         let html = page(theme, config, "标签", &cloud, "", nav, Some(&seo), None, 1, 1, &[])?;
         writer.write_str("tags/index.html", &html)?;
         for (tag, list) in &tags {
@@ -664,7 +710,7 @@ pub(crate) fn generate_collections(
                 render_post_list(theme, list)?
             );
             let path = format!("/tags/{}/", slugify(tag));
-            let seo = SeoInfo { path: &path, og_type: "website", description: "", og_image: None };
+            let seo = SeoInfo { path: &path, og_type: "website", description: "", og_image: None, date: None, updated: None };
             let html = page(theme, config, &format!("标签：{tag}"), &body, "", nav, Some(&seo), None, 1, 1, &[])?;
             writer.write_str(&format!("tags/{}/index.html", slugify(tag)), &html)?;
         }
@@ -673,7 +719,7 @@ pub(crate) fn generate_collections(
     // 分类列表 + 每个分类页
     if !categories.is_empty() {
         let cloud = render_cloud(theme, "分类", "categories", &categories)?;
-        let seo = SeoInfo { path: "/categories/", og_type: "website", description: "", og_image: None };
+        let seo = SeoInfo { path: "/categories/", og_type: "website", description: "", og_image: None, date: None, updated: None };
         let html = page(theme, config, "分类", &cloud, "", nav, Some(&seo), None, 1, 1, &[])?;
         writer.write_str("categories/index.html", &html)?;
         for (cat, list) in &categories {
@@ -683,7 +729,7 @@ pub(crate) fn generate_collections(
                 render_post_list(theme, list)?
             );
             let path = format!("/categories/{}/", slugify(cat));
-            let seo = SeoInfo { path: &path, og_type: "website", description: "", og_image: None };
+            let seo = SeoInfo { path: &path, og_type: "website", description: "", og_image: None, date: None, updated: None };
             let html = page(theme, config, &format!("分类：{cat}"), &body, "", nav, Some(&seo), None, 1, 1, &[])?;
             writer.write_str(&format!("categories/{}/index.html", slugify(cat)), &html)?;
         }
@@ -692,7 +738,7 @@ pub(crate) fn generate_collections(
     // 归档页（按年月倒序分组）
     if !archive.is_empty() {
         let body = render_archive(theme, &archive)?;
-        let seo = SeoInfo { path: "/archive/", og_type: "website", description: "", og_image: None };
+        let seo = SeoInfo { path: "/archive/", og_type: "website", description: "", og_image: None, date: None, updated: None };
         let html = page(theme, config, "归档", &body, "", nav, Some(&seo), None, 1, 1, &[])?;
         writer.write_str("archive/index.html", &html)?;
     }
@@ -707,7 +753,7 @@ pub(crate) fn generate_collections(
     }
     if !series.is_empty() {
         let cloud = render_cloud(theme, "专栏", "series", &series)?;
-        let seo = SeoInfo { path: "/series/", og_type: "website", description: "", og_image: None };
+        let seo = SeoInfo { path: "/series/", og_type: "website", description: "", og_image: None, date: None, updated: None };
         let html = page(theme, config, "专栏", &cloud, "", nav, Some(&seo), None, 1, 1, &[])?;
         writer.write_str("series/index.html", &html)?;
         for (name, list) in series.iter_mut() {
@@ -718,7 +764,7 @@ pub(crate) fn generate_collections(
                 render_post_list(theme, list)?
             );
             let path = format!("/series/{}/", slugify(name));
-            let seo = SeoInfo { path: &path, og_type: "website", description: "", og_image: None };
+            let seo = SeoInfo { path: &path, og_type: "website", description: "", og_image: None, date: None, updated: None };
             let html = page(theme, config, &format!("专栏：{name}"), &body, "", nav, Some(&seo), None, 1, 1, &[])?;
             writer.write_str(&format!("series/{}/index.html", slugify(name)), &html)?;
         }
@@ -993,7 +1039,7 @@ pub(crate) fn generate_search(
   });
 })();
 </script>"#;
-    let seo = SeoInfo { path: "/search/", og_type: "website", description: "", og_image: None };
+    let seo = SeoInfo { path: "/search/", og_type: "website", description: "", og_image: None, date: None, updated: None };
     let html = page(theme, config, "搜索", search_body, "", nav, Some(&seo), None, 1, 1, &[])?;
     writer.write_str("search/index.html", &html)?;
 
@@ -1020,7 +1066,7 @@ pub(crate) fn generate_seo_files(
     writer.write_str("robots.txt", &robots)?;
 
     let body = r#"<h1>404</h1><p>页面不存在或已被移动。<a href="/">回到首页</a></p>"#;
-    let seo = SeoInfo { path: "/404.html", og_type: "website", description: "", og_image: None };
+    let seo = SeoInfo { path: "/404.html", og_type: "website", description: "", og_image: None, date: None, updated: None };
     let html = page(theme, config, "404", body, "", nav, Some(&seo), None, 1, 1, &[])?;
     writer.write_str("404.html", &html)?;
 

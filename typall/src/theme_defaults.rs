@@ -55,6 +55,17 @@ pub const DEFAULT_CSS: &str = r#"
     --border-strong: #3a3c47;
     --code-bg: #23252c;
     --code-ink: #c6c8d2;
+    /* 夜墨下代码高亮：typst 默认 token 为亮色主题设计，暗底不可读，
+       参照「曜石」的重映射（与 themes/obsidian 保持同一套暗色语法色） */
+    --tok-301414: #c8d3e0;
+    --tok-16718d: #7dd3fc;
+    --tok-4b69c6: #82aaff;
+    --tok-198810: #9ece6a;
+    --tok-1d6c76: #4ec9b0;
+    --tok-74747c: #8a93a8;
+    --tok-8b41b1: #c792ea;
+    --tok-b60157: #f07178;
+    --tok-d73948: #f78c6c;
   }
 }
 

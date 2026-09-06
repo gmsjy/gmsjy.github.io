@@ -59,6 +59,9 @@ enum Command {
     Serve {
         #[arg(long)]
         port: Option<u16>,
+        /// 绑定地址：127.0.0.1 仅本机；0.0.0.0 开放局域网（手机扫码预览）
+        #[arg(long)]
+        host: Option<String>,
         /// 自动在浏览器打开
         #[arg(long)]
         open: bool,
@@ -265,9 +268,9 @@ fn main() -> anyhow::Result<()> {
                 Ok(())
             }
         },
-        Command::Serve { port, open } => {
+        Command::Serve { port, open, host } => {
             let config = config::Config::load(&root)?;
-            serve::serve(&root, config, port.unwrap_or(8080), open)
+            serve::serve(&root, config, port.unwrap_or(8080), open, host.as_deref())
         }
         Command::Deploy { target, dry_run } => {
             let config = config::Config::load(&root)?;

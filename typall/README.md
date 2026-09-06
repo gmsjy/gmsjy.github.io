@@ -55,7 +55,7 @@ typall build -C ~/blogs/physics        # 等价：参数放在子命令后
 | `typall init [name]` | 创建项目脚手架（含示例文章、配置） |
 | `typall new <post>` | 在 `posts/` 下生成新文章模板 |
 | `typall build` | 构建站点到 `public/`（`--strict` 死链检查、`--drafts` 含草稿） |
-| `typall serve` | 开发服务器 + Live Reload（`--port` 端口、`--open` 开浏览器） |
+| `typall serve` | 开发服务器 + Live Reload（`--port` 端口、`--open` 开浏览器、`--host 0.0.0.0` 开放局域网并打印手机扫码二维码） |
 | `typall deploy` | 按配置部署（`--target` 临时覆盖、`--dry-run` 模拟） |
 | `typall publish --to markdown` | 将文章导出为 Markdown（单篇 → 平台，见「发布（publish）」） |
 | `typall check` | 语法检查（不生成输出） |
@@ -270,6 +270,16 @@ typall deploy && sudo systemctl reload nginx
 | `typall serve` + 复制按钮 | **公众号发文**：预览页一键复制富文本，粘贴进公众号编辑器 | 剪贴板 |
 
 博客作者的典型节奏：`serve` 写作 → `build --strict` → `deploy` 上线 → 需要时 `publish` 导出分发。
+
+### 分享图（cover）
+
+front-matter 可显式指定文章的社交分享图（og:image 第一优先级）：
+
+```typst
+#let cover = "assets/images/cover.png"
+```
+
+不指定时依次回退：正文首图 → 自动生成的分享卡（见「SEO」）。
 
 ### 定时发布的部署联动
 
@@ -544,9 +554,11 @@ CeTZ 自带 WebAssembly 内核（贝塞尔曲线求极值、布尔运算、树�
 
 - `<link rel="canonical">` + OG / Twitter Card 标签（文章页 `og:type="article"`，其余 `website`）；
 - 文章页 `og:description` / 页面描述取自摘要（无摘要时回退站点描述）；
-- **文章页 `og:image` 自动生成**：优先取正文首图；无图文章用站点令牌配色渲染 1200×630 分享卡
-  （标题 + 站点名 + 日期，写入 `og/<slug>.png`），Twitter Card 自动升级 `summary_large_image`——
-  分享到微信/Twitter 时有像样的缩略图。强调色可用 `[theme.params] accent_color = "#…"` 定制；
+- **文章页 `og:image` 自动生成**：优先级为 front-matter `#let cover = "…"` → 正文首图 →
+  站点令牌配色自动渲染的 1200×630 分享卡（标题 + 站点名 + 日期，写入 `og/<slug>.png`），
+  Twitter Card 自动升级 `summary_large_image`——分享到微信/Twitter 时有像样的缩略图。
+  强调色可用 `[theme.params] accent_color = "#…"` 定制；
+- **JSON-LD 结构化数据**：文章页输出 BlogPosting schema（headline/author/datePublished/…），供搜索引擎富摘要；
 - `public/robots.txt`（含 `Sitemap:` 指引）与 `public/404.html`（供 GitHub Pages / Netlify 等静态托管使用）。
 
 未配置 `site.url` 时 SEO 标签整块省略（避免残缺标签），robots.txt 与 404.html 仍会生成。

@@ -357,7 +357,7 @@ mod tests {
             },
             ..Default::default()
         };
-        assert_eq!(build_seo_head(&config, "/posts/foo/", "article", "标题", "摘要", None), "");
+        assert_eq!(build_seo_head(&config, "/posts/foo/", "article", "标题", "摘要", None, None, None), "");
     }
 
     #[test]
@@ -370,7 +370,7 @@ mod tests {
             ..Default::default()
         };
         let head =
-            build_seo_head(&config, "/posts/foo/", "article", "标题 <x>", "摘要 & 更多", None);
+            build_seo_head(&config, "/posts/foo/", "article", "标题 <x>", "摘要 & 更多", None, None, None);
         assert!(head.contains("rel=\"canonical\" href=\"https://blog.example.com/posts/foo/\""));
         assert!(head.contains("property=\"og:type\" content=\"article\""));
         assert!(head.contains("property=\"og:title\" content=\"标题 &lt;x&gt;\""));
@@ -396,6 +396,8 @@ mod tests {
             "标题",
             "摘要",
             Some("https://blog.example.com/og/posts-foo.png"),
+            None,
+            None,
         );
         assert!(head.contains("property=\"og:image\" content=\"https://blog.example.com/og/posts-foo.png\""));
         assert!(head.contains("name=\"twitter:card\" content=\"summary_large_image\""));
@@ -411,7 +413,7 @@ mod tests {
             },
             ..Default::default()
         };
-        let head = build_seo_head(&config, "/", "website", "首页", "", None);
+        let head = build_seo_head(&config, "/", "website", "首页", "", None, None, None);
         assert!(head.contains("og:description\" content=\"站点描述\""));
     }
 

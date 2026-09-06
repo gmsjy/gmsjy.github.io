@@ -264,7 +264,7 @@ struct ServeState {
     status: Arc<watch::Sender<BuildStatus>>,
 }
 
-pub fn serve(root: &Path, config: Config, port: u16, open: bool) -> anyhow::Result<()> {
+pub fn serve(root: &Path, config: Config, port: u16, open: bool, host: Option<&str>) -> anyhow::Result<()> {
     let root = root.to_path_buf();
     // 首次构建：失败不再中止 serve——错误状态进 watch 通道，浏览器浮层展示，
     // 修复后任一文件保存触发重建并自动恢复。
@@ -314,14 +314,54 @@ pub fn serve(root: &Path, config: Config, port: u16, open: bool) -> anyhow::Resu
             .route("/{*path}", get(static_handler))
             .with_state(state);
 
-        let addr = format!("127.0.0.1:{port}");
+        let host = host.unwrap_or("127.0.0.1");
+        let addr = format!("{host}:{port}");
         let listener = tokio::net::TcpListener::bind(&addr).await?;
-        println!("🚀 开发服务器运行于 http://{addr}  (Ctrl+C 退出)");
+        let base = format!("http://{}:{port}", if host == "0.0.0.0" { "127.0.0.1" } else { host });
+        println!("🚀 开发服务器运行于 {base}  (Ctrl+C 退出)");
+        if host == "0.0.0.0"
+            && let Some(lan_ip) = lan_ip()
+        {
+            let lan_url = format!("http://{lan_ip}:{port}");
+            println!("📱 局域网预览：{lan_url}（手机同一 Wi-Fi 扫码直达）");
+            print_qr(&lan_url);
+            println!("⚠️ 0.0.0.0 已向局域网开放此开发服务器，公共网络慎用");
+        }
         axum::serve(listener, app).await?;
         Ok::<(), anyhow::Error>(())
     })?;
-
     Ok(())
+}
+
+/// 本机局域网 IP：UDP connect 到公共地址（不实际发包）读出路由选择的本地端点。
+fn lan_ip() -> Option<std::net::IpAddr> {
+    let sock = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+    sock.connect("8.8.8.8:80").ok()?;
+    sock.local_addr().ok().map(|a| a.ip())
+}
+
+/// 终端二维码：Unicode 半块字符渲染（两行并作一行，省屏高）。
+fn print_qr(text: &str) {
+    let qr = qrcodegen::QrCode::encode_text(text, qrcodegen::QrCodeEcc::Medium)
+        .expect("URL 生成二维码失败");
+    let size = qr.size() as usize;
+    let dark = |x: usize, y: usize| y < size && qr.get_module(x as i32, y as i32);
+    println!("┌{}┐", "──".repeat(size + 2));
+    for y in (0..size).step_by(2) {
+        let mut row = String::from("│  ");
+        for x in 0..size {
+            let (top, bottom) = (dark(x, y), dark(x, y + 1));
+            row.push_str(match (top, bottom) {
+                (true, true) => "█",
+                (true, false) => "▀",
+                (false, true) => "▄",
+                (false, false) => " ",
+            });
+        }
+        row.push_str("  │");
+        println!("{row}");
+    }
+    println!("└{}┘", "──".repeat(size + 2));
 }
 
 /// SSE：推送构建状态变化（`build` 事件，JSON `{version, error}`）。
