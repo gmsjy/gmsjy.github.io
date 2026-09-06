@@ -404,6 +404,7 @@ main > h1 {
   border-top: 1px solid var(--fg-strong);
 }
 .post-nav a {
+  min-width: 0;
   color: var(--muted);
   text-decoration: none;
   font-size: 0.88rem;
@@ -445,12 +446,14 @@ main > h1 {
   display: flex;
   justify-content: space-between;
   flex: 1 1 100%;
+  min-width: 0;
   gap: 1.2rem;
   margin-top: 0.4rem;
   padding-top: 0.9rem;
   border-top: 1px solid var(--border);
 }
 .series-nav .series-links a {
+  min-width: 0;
   color: var(--muted);
   text-decoration: none;
   font-size: 0.88rem;

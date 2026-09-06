@@ -429,6 +429,7 @@ main > h1::after {
   box-shadow: var(--shadow);
 }
 .post-nav a {
+  min-width: 0;
   color: var(--muted);
   text-decoration: none;
   font-size: 0.9rem;
@@ -471,12 +472,14 @@ main > h1::after {
   display: flex;
   justify-content: space-between;
   flex: 1 1 100%;
+  min-width: 0;
   gap: 1.2rem;
   margin-top: 0.4rem;
   padding-top: 0.9rem;
   border-top: 1px dashed var(--border);
 }
 .series-nav .series-links a {
+  min-width: 0;
   color: var(--muted);
   text-decoration: none;
   font-size: 0.9rem;

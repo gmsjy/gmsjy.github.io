@@ -434,6 +434,7 @@ main > h1 {
   text-decoration: none;
   font-size: 0.9rem;
   max-width: 46%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -470,6 +471,7 @@ main > h1 {
   display: flex;
   justify-content: space-between;
   flex: 1 1 100%;
+  min-width: 0;   /* flex 项 min-width:auto 会让 nowrap 内容撑破容器 */
   gap: 1.2rem;
   margin-top: 0.4rem;
   padding-top: 0.9rem;
@@ -480,6 +482,7 @@ main > h1 {
   text-decoration: none;
   font-size: 0.9rem;
   max-width: 46%;
+  min-width: 0;   /* nowrap 下 flex 子项 min-width:auto 会顶掉 max-width，导致手机溢出 */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
