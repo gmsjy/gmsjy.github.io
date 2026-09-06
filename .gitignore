@@ -1,0 +1,10 @@
+# 本地工具状态（工作日志，不入库）
+/.workbuddy/
+
+*.log
+
+# 本地构建与工具产物
+/public/
+/.typall/
+/.zcode/
+/_shots/

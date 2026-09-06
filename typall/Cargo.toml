@@ -1,0 +1,50 @@
+[package]
+name = "typall"
+version = "0.1.0"
+edition = "2024"
+description = "A self-contained static blog generator powered by Typst"
+license = "Apache-2.0"
+
+[[bin]]
+name = "typall"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+typst = "=0.15.1"
+typst-assets = { version = "0.15.1", features = ["fonts"] }
+typst-html = "0.15.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+serde_yml = "0.0.12"
+clap = { version = "4", features = ["derive"] }
+rayon = "1"
+walkdir = "2"
+scraper = "0.22"
+ego-tree = "0.10"
+axum = "0.8.9"
+notify = "8.2.0"
+tokio = { version = "1.53.1", features = ["full"] }
+tokio-stream = { version = "0.1", default-features = false, features = ["sync"] }
+chrono = "0.4.45"
+flate2 = "1"
+brotli = "8"
+typst-pdf = "0.15.1"
+typst-layout = "0.15.1"
+ureq = "2"
+zip = "2"
+base64 = "0.22"
+tar = "0.4"
+resvg = "0.45"
+tera = "1"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = 3
+panic = "abort"

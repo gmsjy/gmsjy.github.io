@@ -1,0 +1,28 @@
+[site]
+title = "知止的物理世界"
+description = "一个用 Typst 驱动的静态博客"
+url = "https://gmsjy.github.io"
+author = "gmsjy"
+language = "zh-CN"
+
+[build]
+output_dir = "public"
+strict = false
+drafts = false
+
+[build.math]
+renderer = "svg"
+number_equations = true
+equation_prefix = "公式"
+
+[theme]
+name = "default"
+
+[deploy]
+strategy = "git"               # git | copy | netlify | vercel
+
+[deploy.git]
+repo = "https://github.com/gmsjy/gmsjy.github.io.git"
+branch = "main"                # 用户主站仓库，Pages 从 main 根路径服务
+commit_message = "Update blog at {timestamp}"
+auto_push = true

@@ -1,0 +1,21 @@
+# ---- 构建产物（全部可再生成） ----
+/target
+/public
+/.typall
+/publish
+/out
+/pdf
+/themes-*.zip
+*.log
+
+# ---- 本地敏感信息（含凭据，绝不入库） ----
+/typall.wechat.toml
+/typall.wechat.local.toml
+/wechat-cover.png
+
+# ---- CJK 字体：Noto Sans CJK SC（OFL）已随仓库入库，公式汉字开箱即用。
+#      如自行放置**版权字体**（SimHei 等）请勿提交——先加回 /.gitignore 条目。
+# /assets/fonts/
+
+# artifact-preview 渲染缓存
+/.preview/
