@@ -129,8 +129,9 @@ pub(crate) fn system_font_dirs() -> Vec<PathBuf> {
         dirs.push(PathBuf::from("/usr/share/fonts"));
         dirs.push(PathBuf::from("/usr/local/share/fonts"));
         if let Some(home) = std::env::var_os("HOME") {
-            dirs.push(PathBuf::from(home).join(".fonts"));
-            dirs.push(PathBuf::from(home).join(".local/share/fonts"));
+            // 用借用构造，避免 home 被 move（此处需连续使用两次）
+            dirs.push(PathBuf::from(&home).join(".fonts"));
+            dirs.push(PathBuf::from(&home).join(".local/share/fonts"));
         }
     }
     dirs.retain(|p| p.is_dir());
