@@ -554,10 +554,10 @@ jobs:
       # —— 获取 typall 二进制（二选一，按你的分发方式改）——
       # 方式 A：typall 发布到 crates.io 后
       - run: cargo install typall
-      # 方式 B：从 release 下载（改成分支仓的 release 地址）
+      # 方式 B：从生成器仓库的 release 下载（产物名与 release.yml 矩阵一致）
       # - run: |
-      #     curl -L -o typall.zip https://github.com/<you>/typall/releases/latest/download/typall-linux-x64.zip
-      #     unzip typall.zip && chmod +x typall && mv typall ~/.cargo/bin/
+      #     curl -L -o typall.tar.gz https://github.com/gmsjy/typall/releases/latest/download/typall-linux-x64.tar.gz
+      #     tar xzf typall.tar.gz && mv typall ~/.cargo/bin/
 
       - name: Build site
         run: typall build

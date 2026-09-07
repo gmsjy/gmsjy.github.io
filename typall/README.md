@@ -175,6 +175,10 @@ token/媒体缓存）已整体移除。
 
 `typall build` 产出的是纯静态文件（`public/`，零 JS、自带 gzip/brotli 预压缩副本），任何静态托管都能直接服务。四种部署策略按需选择，都支持 `--dry-run` 模拟执行。
 
+### 安装 typall 本体
+
+三种方式任选：从 [Releases](https://github.com/gmsjy/typall/releases) 下载对应平台二进制（windows-x64 / linux-x64 / macos-arm64 / macos-intel，`v*` tag 自动构建）；`cargo install typall`（crates.io 发布后）；或源码 `cargo build --release`。
+
 ### 部署前检查清单
 
 | 检查项 | 命令/位置 | 说明 |

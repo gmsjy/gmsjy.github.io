@@ -1,0 +1,70 @@
+# 发布二进制：push tag "v*" 触发，四平台矩阵构建并上传 GitHub Release
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: typall-%VERSION%-windows-x64.zip
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            archive: typall-%VERSION%-linux-x64.tar.gz
+          - os: macos-14
+            target: aarch64-apple-darwin
+            archive: typall-%VERSION%-macos-arm64.tar.gz
+          - os: macos-13
+            target: x86_64-apple-darwin
+            archive: typall-%VERSION%-macos-intel.tar.gz
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: typall
+          key: ${{ matrix.target }}
+
+      - name: Build binary
+        run: cargo build --release --manifest-path typall/Cargo.toml --target ${{ matrix.target }}
+
+      - name: Package (unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          BIN="typall/target/${{ matrix.target }}/release/typall"
+          ARCHIVE="${ARCHIVE//\%VERSION\%/$VERSION}"
+          tar czf "$ARCHIVE" -C "typall/target/${{ matrix.target }}/release" typall -C ../../.. LICENSE README.md
+          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+        env:
+          ARCHIVE: ${{ matrix.archive }}
+
+      - name: Package (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          $archive = $env:ARCHIVE.Replace("%VERSION%", $version)
+          Compress-Archive -Path "typall/target/${{ matrix.target }}/release/typall.exe", "LICENSE", "README.md" -DestinationPath $archive
+          "ARCHIVE=$archive" | Out-File -Append $env:GITHUB_ENV
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ARCHIVE }}
+          generate_release_notes: true
