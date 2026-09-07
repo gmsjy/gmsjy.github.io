@@ -151,7 +151,7 @@ pub(crate) fn build_seo_head(
         fields.push(format!(r#""headline": {}"#, json_escape(title)));
         fields.push(format!(r#""url": {}"#, json_escape(&canonical)));
         fields.push(format!(
-            r#""author": {{"@type": "Person", "name": "{}"}}"#,
+            r#""author": {{"@type": "Person", "name": {}}}"#,
             json_escape(&config.site.author)
         ));
         fields.push(format!(r#""description": {}"#, json_escape(desc)));
