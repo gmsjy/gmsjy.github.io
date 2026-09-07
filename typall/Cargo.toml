@@ -39,6 +39,7 @@ tar = "0.4"
 resvg = "0.45"
 tera = "1"
 qrcodegen = "1.8.0"
+pulldown-cmark = "0.13.4"
 
 [dev-dependencies]
 tempfile = "3"

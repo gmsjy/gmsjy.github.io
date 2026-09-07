@@ -7,6 +7,7 @@ mod config;
 mod content;
 mod deploy;
 mod feed;
+mod import_md;
 mod ir;
 mod packages;
 mod pdf;
@@ -103,6 +104,14 @@ enum Command {
     List,
     /// 站点概况（文章统计 / 配置 / 上次构建）
     Status,
+    /// 导入 Markdown 文章并转换为 Typst 源（写入 posts/）
+    Import {
+        /// Markdown 文件路径
+        file: String,
+        /// 目标 slug（如 posts/my-post 或 my-post；默认取文件名）
+        #[arg(long)]
+        slug: Option<String>,
+    },
     /// 重命名文章 slug，并自动把旧 slug 写入 aliases（旧链接不 404）
     Mv {
         /// 旧 slug（如 posts/old-name 或 old-name）
@@ -191,6 +200,7 @@ fn main() -> anyhow::Result<()> {
             build::build(&root, &config, drafts)
         }
         Command::Check { strict } => build::check(&root, strict),
+        Command::Import { file, slug } => cmd_import(&root, &file, slug.as_deref()),
         Command::List => cmd_list(&root),
         Command::Status => cmd_status(&root),
         Command::Mv { old, new } => cmd_mv(&root, &old, &new),
@@ -452,6 +462,106 @@ fn normalize_slug(slug: &str) -> String {
         .strip_prefix("posts/")
         .unwrap_or(slug.trim_matches('/'))
         .to_string()
+}
+
+fn cmd_import(root: &Path, file: &str, slug: Option<&str>) -> anyhow::Result<()> {
+    let src_path = Path::new(file);
+    let src_name = src_path.file_name().and_then(|n| n.to_str()).unwrap_or(file);
+    let base_name = src_name.trim_end_matches(".md").trim_end_matches(".markdown");
+    let slug = slug
+        .map(crate::import_slug_normalize)
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| format!("{}-{}", today(), import_slugify(base_name)));
+    if slug.is_empty() || slug.contains("..") {
+        anyhow::bail!("非法 slug：{slug}");
+    }
+    let markdown = std::fs::read_to_string(src_path)
+        .map_err(|e| anyhow::anyhow!("读取 {file} 失败: {e}"))?;
+
+    // YAML front-matter 提取（--- 包裹的 title/date/tags）
+    let (yaml, body) = split_yaml_front_matter(&markdown);
+    let front = yaml_front_to_typst(&yaml);
+
+    let typst = crate::import_md::convert(body, front.as_deref());
+    let posts = root.join("posts");
+    std::fs::create_dir_all(&posts)?;
+    let out_path = posts.join(format!("{slug}.typ"));
+    if out_path.exists() {
+        anyhow::bail!("目标已存在：{}", out_path.display());
+    }
+    std::fs::write(&out_path, &typst)?;
+    println!("✅ 已导入 posts/{slug}.typ（{} 字节）", typst.len());
+    println!("   提示：检查图片路径与数学公式转换结果，`typall serve` 预览效果");
+    Ok(())
+}
+
+fn today() -> String {
+    chrono::Local::now().format("%Y-%m-%d").to_string()
+}
+
+fn import_slugify(name: &str) -> String {
+    let cleaned: String = name
+        .chars()
+        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' })
+        .collect();
+    cleaned.trim_matches('-').to_string()
+}
+
+fn import_slug_normalize(slug: &str) -> String {
+    slug.trim_matches('/').strip_prefix("posts/").unwrap_or(slug.trim_matches('/')).to_string()
+}
+
+/// 拆分 Markdown 的 YAML front-matter（--- 包裹），返回 (yaml 正文, 其余内容)。
+fn split_yaml_front_matter(md: &str) -> (Option<String>, &str) {
+    if !md.starts_with("---") {
+        return (None, md);
+    }
+    let rest = &md[3..];
+    let Some(end) = rest.find("
+---") else {
+        return (None, md);
+    };
+    (Some(rest[..end].trim().to_string()), &rest[end + 4..])
+}
+
+/// YAML front-matter 的 title/date/tags 三键 → `#let` 元数据行。
+fn yaml_front_to_typst(yaml: &Option<String>) -> Option<String> {
+    let qc = char::from_u32(34).unwrap();
+    let q = char::from_u32(39).unwrap();
+    let yaml = yaml.as_ref()?;
+    let mut lines = Vec::new();
+    for line in yaml.lines() {
+        let Some((k, v)) = line.split_once(':') else { continue };
+        let key = k.trim();
+        let val = v.trim().trim_matches(|c| c == qc || c == q);
+        match key {
+            "title" | "date" | "author" | "series" | "excerpt" => {
+                if !val.is_empty() {
+                    lines.push(format!("#let {key} = \"{val}\""));
+                }
+            }
+            "tags" => {
+                let tags: Vec<String> = val
+                    .split(',')
+                    .map(|t| t.trim().trim_matches(|c| c == qc || c == q).to_string())
+                    .filter(|t| !t.is_empty())
+                    .collect();
+                if !tags.is_empty() {
+                    let quoted: Vec<String> =
+                        tags.iter().map(|t| format!("\"{t}\"")).collect();
+                    lines.push(format!("#let tags = ({})", quoted.join(", ")));
+                }
+            }
+            "draft" => lines.push(format!("#let draft = {val}")),
+            _ => {}
+        }
+    }
+    if lines.is_empty() {
+        None
+    } else {
+        Some(lines.join("
+"))
+    }
 }
 
 fn cmd_mv(root: &Path, old: &str, new: &str) -> anyhow::Result<()> {
