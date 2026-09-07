@@ -8,6 +8,7 @@
 //! 1. heading 锚点注入 + TOC 提取；
 //! 2. 代码高亮颜色变量化（主题可覆盖 `--tok-*`）；
 //! 3. 图片懒加载 + alt 兜底。
+//! 4. SVG 墨色 → currentColor（暗色主题下公式/插图随 CSS 文字色，引擎层根治）。
 
 use crate::theme;
 
@@ -182,6 +183,9 @@ pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
     }
     out3.push_str(rest);
 
+    // --- 4. SVG 墨色 → currentColor（暗色主题引擎层方案）---
+    let out4 = svg_ink_to_current_color(&out3);
+
     // --- 组装 TOC ---
     // 只产出 `<li>` 列表：`<ul>`/`<nav>` 外壳由主题 `partials/toc.html` 决定
     // （规格书 §4.3，内置默认见 `theme::DEFAULT_TOC`）。
@@ -194,7 +198,7 @@ pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
         ));
     }
 
-    (out3, items)
+    (out4, items)
 }
 
 /// 从标题片段中剥离 HTML 标签并解码实体，仅保留可见文本。
@@ -202,6 +206,35 @@ pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
 /// 标题里的 `*强调*` 会被 Typst 输出为 `<em>…</em>`、行内公式输出为整段
 /// MathML；锚点 slug 与 TOC 文案都基于还原后的纯文本，避免标签残骸混入。
 /// 也供 publish 层生成摘要复用（`&nbsp;` 解码为普通空格）。
+/// SVG 墨色 → currentColor（暗色主题引擎层根治）。
+///
+/// typst 导出的 SVG 把墨色硬编码为 `#000000`（及 cetz 辅助线的 6 种
+/// 带 alpha 的 8 位变体）。站点目标将其改写为 `currentColor` +
+/// `fill-opacity`/`stroke-opacity`，颜色随 CSS `color` 走——暗色主题下
+/// 公式与插图自动可读，主题层无需再做属性选择器 hack。
+/// 公众号/知乎路径不经过本模块，导出物保留黑色不受影响。
+/// 彩色笔画（品牌红/灰等）不在映射表，原样保留。
+pub(crate) fn svg_ink_to_current_color(html: &str) -> String {
+    // (源属性串, 替换属性串) —— 顺序无关：带引号的完整属性匹配不会互相误伤
+    const MAP: &[(&str, &str)] = &[
+        (r##"fill="000000""##, r##"fill="currentColor""##),
+        (r##"stroke="000000""##, r##"stroke="currentColor""##),
+        (r##"fill="00000026""##, r##"fill="currentColor" fill-opacity="0.15""##),
+        (r##"stroke="00000040""##, r##"stroke="currentColor" stroke-opacity="0.25""##),
+        (r##"stroke="00000047""##, r##"stroke="currentColor" stroke-opacity="0.28""##),
+        (r##"stroke="0000004c""##, r##"stroke="currentColor" stroke-opacity="0.3""##),
+        (r##"stroke="00000059""##, r##"stroke="currentColor" stroke-opacity="0.35""##),
+        (r##"stroke="00000073""##, r##"stroke="currentColor" stroke-opacity="0.45""##),
+    ];
+    let mut out = html.to_string();
+    for (from, to) in MAP {
+        if out.contains(from) {
+            out = out.replace(from, to);
+        }
+    }
+    out
+}
+
 pub(crate) fn strip_html(html: &str) -> String {
     // 1) 剥离标签（跳过 `<...>`，含 MathML 自闭合标签）
     let mut text = String::with_capacity(html.len());
@@ -336,6 +369,32 @@ mod tests {
     fn slugify_empty_falls_back_to_untitled() {
         assert_eq!(slugify(""), "untitled");
         assert_eq!(slugify("!!!"), "untitled");
+    }
+
+
+    #[test]
+    fn svg_ink_rewrites_black_to_current_color() {
+        // {q}/{b} 占位：Rust format! 捕获 char 变量（q=双引号, b=反斜杠）
+        let q = char::from_u32(34).unwrap();
+        
+        let cases: Vec<(String, String)> = vec![
+            (format!("fill={q}000000{q}"), format!("fill={q}currentColor{q}")),
+            (format!("stroke={q}000000{q}"), format!("stroke={q}currentColor{q}")),
+            (format!("fill={q}00000026{q}"), format!("fill={q}currentColor{q} fill-opacity={q}0.15{q}")),
+            (format!("stroke={q}0000004c{q}"), format!("stroke={q}currentColor{q} stroke-opacity={q}0.3{q}")),
+            (format!("stroke={q}00000073{q}"), format!("stroke={q}currentColor{q} stroke-opacity={q}0.45{q}")),
+        ];
+        for (from, to) in &cases {
+            let html = format!("<path {from}/>");
+            let out = svg_ink_to_current_color(&html);
+            assert!(out.contains(to), "未重写: {from} => {out}");
+        }
+        // 彩色笔画保留
+        let keep = "<path stroke={q}#d64541{q} fill={q}#aaaaaa{q}/>".replace("{q}", &q.to_string());
+        assert_eq!(svg_ink_to_current_color(&keep), keep);
+        // 8 位 alpha 变体命中重映射并带透明度
+        let alpha = "<path stroke={q}0000004c{q}/>".replace("{q}", &q.to_string());
+        assert!(svg_ink_to_current_color(&alpha).contains("stroke-opacity"));
     }
 
     #[test]
