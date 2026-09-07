@@ -58,6 +58,7 @@ typall build -C ~/blogs/physics        # 等价：参数放在子命令后
 | `typall serve` | 开发服务器 + Live Reload（`--port` 端口、`--open` 开浏览器、`--host 0.0.0.0` 开放局域网并打印手机扫码二维码） |
 | `typall deploy` | 按配置部署（`--target` 临时覆盖、`--dry-run` 模拟） |
 | `typall publish --to markdown` | 将文章导出为 Markdown（单篇 → 平台，见「发布（publish）」） |
+| `typall publish --to zhihu` | 生成知乎可粘贴的富文本（公式转 LaTeX，见「发布（publish）」） |
 | `typall check` | 语法检查（不生成输出） |
 | `typall list` | 文章清单：状态（已发布/草稿/定时）、日期、标题、slug |
 | `typall status` | 站点概况：文章统计、主题、site.url、上次构建、发布账本 |

@@ -246,6 +246,21 @@ const COPY_SCRIPT: &str = r#"<style>
   var btn=document.createElement('button');btn.textContent='复制到公众号';
   btn.title='复制正文 HTML 到剪贴板，粘贴进微信公众号编辑器';
   bar.appendChild(btn);document.body.appendChild(bar);
+  // 复制到知乎：直接复制 article 富文本（知乎编辑器宽容，无需内联样式/图片栅格化）
+  var btn2=document.createElement('button');btn2.textContent='复制到知乎';
+  btn2.onclick=function(){
+    var art=document.querySelector('article');
+    if(!art){btn2.textContent='无正文';return}
+    var item=new ClipboardItem({
+      'text/html':new Blob([art.outerHTML],{type:'text/html'}),
+      'text/plain':new Blob([art.textContent],{type:'text/plain'})
+    });
+    navigator.clipboard.write([item]).then(function(){
+      btn2.textContent='✅ 已复制';
+      setTimeout(function(){btn2.textContent='复制到知乎'},1800);
+    },function(){btn2.textContent='❌ 失败'});
+  };
+  bar.appendChild(btn2);
   var timer=null;
   btn.addEventListener('click',function(){
     writeClip(function(ok){

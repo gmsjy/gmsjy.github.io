@@ -8,6 +8,7 @@ mod content;
 mod deploy;
 mod feed;
 mod import_md;
+mod latex;
 mod ir;
 mod packages;
 mod pdf;
@@ -76,7 +77,7 @@ enum Command {
     },
     /// 将文章发布到目标平台格式（单篇 → 平台，与 deploy 整站部署相对）
     Publish {
-        /// 发布目标：markdown / wechat（省略时默认 markdown）
+        /// 发布目标：markdown / wechat / zhihu（省略时默认 markdown）
         #[arg(long)]
         to: Option<String>,
         /// 自定义导出目录（默认取 [publish] out_dir，再默认 publish/）

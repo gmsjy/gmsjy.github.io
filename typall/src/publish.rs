@@ -181,6 +181,86 @@ pub trait Publisher {
     ) -> anyhow::Result<RenderedDoc>;
 }
 
+/// 知乎发布目标：生成知乎编辑器可粘贴的富文本 HTML。
+///
+/// 公式策略：typst 数学源码经 [`crate::latex`] 转为 LaTeX，输出为
+/// `<span data-formula="latex">…</span>` 形态——知乎编辑器粘贴时会把
+/// LaTeX 公式转换为原生公式块；正文为最小内联样式（知乎比公众号宽容）。
+struct ZhihuPublisher;
+
+impl Publisher for ZhihuPublisher {
+    fn name(&self) -> &'static str {
+        "zhihu"
+    }
+
+    fn rel_path(&self, doc: &CompiledDoc) -> String {
+        format!("{}.html", doc.slug)
+    }
+
+    fn render(
+        &self,
+        doc: &CompiledDoc,
+        body_html: &str,
+        _ctx: &PublishCtx<'_>,
+    ) -> anyhow::Result<RenderedDoc> {
+        Ok(RenderedDoc {
+            rel_path: self.rel_path(doc),
+            content: render_zhihu(doc, body_html),
+        })
+    }
+}
+
+/// 知乎富文本渲染：标题 + 元信息 + 正文（公式 MathItem → LaTeX span）。
+///
+/// 公式替换策略：`body_html` 中公式渲染物按序与 `doc.math` 配对（与
+/// markdown 目标同款逻辑），替换为 LaTeX span；配对失败保守回退原 HTML。
+fn render_zhihu(doc: &CompiledDoc, body_html: &str) -> String {
+    use std::fmt::Write as _;
+
+    // 公式渲染物占位与 MathItem 配对：逐个替换为 LaTeX span
+    let mut html = body_html.to_string();
+    if !doc.math.is_empty() {
+        // 公式渲染物按序替换为 LaTeX 形态（知乎公式）；数量不匹配（动态
+        // 生成公式等罕见场景）时保守保留原渲染物
+        replace_math_with_latex_zhihu(&mut html, &doc.math);
+    }
+
+    let mut out = String::with_capacity(html.len() + 512);
+    let _ = writeln!(out, "<h1>{}</h1>", doc.meta.title);
+    if let Some(d) = &doc.meta.date {
+        let _ = writeln!(out, "<p><em>{}</em></p>", d);
+    }
+    let _ = write!(out, "{}", html);
+    let _ = doc.meta.updated;
+    out
+}
+
+/// 知乎公式替换：公式渲染物占位后按序重写为知乎 LaTeX 形态。
+///
+/// 块级公式 → `$$…$$` 独立段；行内 → `$…$`。渲染物数量与 MathItem
+/// 不匹配时返回 false（调用方保留原 HTML 降级）。
+fn replace_math_with_latex_zhihu(html: &mut String, math: &[crate::ir::MathItem]) -> bool {
+    let (marked, spans) = substitute_math(html);
+    if spans.len() != math.len() {
+        return false;
+    }
+    let mut out = marked;
+    for (i, item) in math.iter().enumerate() {
+        let latex = crate::latex::typst_math_to_latex(&item.source);
+        let replacement = if item.block {
+            format!(r#"<p>$$ {} $$</p>"#, latex)
+        } else {
+            format!(r#"<span class="ztext-math">$ {} $</span>"#, latex)
+        };
+        let marker = math_marker(i);
+        if let Some(pos) = out.find(&marker) {
+            out.replace_range(pos..pos + marker.len(), &replacement);
+        }
+    }
+    *html = out;
+    true
+}
+
 /// 注册表条目：`(目标名, 构造器)`。
 type PublisherEntry = (&'static str, fn() -> Box<dyn Publisher>);
 
@@ -188,6 +268,7 @@ type PublisherEntry = (&'static str, fn() -> Box<dyn Publisher>);
 const REGISTRY: &[PublisherEntry] = &[
     ("markdown", || Box::new(MarkdownPublisher) as Box<dyn Publisher>),
     ("wechat", || Box::new(crate::wechat::WechatPublisher) as Box<dyn Publisher>),
+    ("zhihu", || Box::new(ZhihuPublisher) as Box<dyn Publisher>),
 ];
 
 fn publisher_for(name: &str) -> anyhow::Result<Box<dyn Publisher>> {
