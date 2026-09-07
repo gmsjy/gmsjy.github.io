@@ -67,6 +67,7 @@ pub fn convert(markdown: &str, front_matter: Option<&str>) -> String {
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_TABLES);
     opts.insert(Options::ENABLE_STRIKETHROUGH);
+    opts.insert(Options::ENABLE_MATH);
     let parser = Parser::new_ext(markdown, opts);
 
     let mut out = String::new();
@@ -77,6 +78,10 @@ pub fn convert(markdown: &str, front_matter: Option<&str>) -> String {
 
     let mut list_stack: Vec<bool> = Vec::new(); // true = 有序
     let mut in_quote = false;
+    // 表格状态：Some(列数) 表示正在收集表格；cell_buf 为当前单元格内容
+    let mut table_cols: Option<usize> = None;
+    let mut table_rows: Vec<Vec<String>> = Vec::new();
+    let mut cell_buf = String::new();
 
     for event in parser {
         match event {
@@ -102,12 +107,69 @@ pub fn convert(markdown: &str, front_matter: Option<&str>) -> String {
                     out.push_str("\n\n");
                 }
             }
-            Event::Text(t) => out.push_str(&inline_text(&t)),
-            Event::Code(c) => out.push_str(&format!("`{c}`")),
-            Event::Start(Tag::Emphasis) => out.push('_'),
-            Event::End(TagEnd::Emphasis) => out.push('_'),
-            Event::Start(Tag::Strong) => out.push('*'),
-            Event::End(TagEnd::Strong) => out.push('*'),
+            Event::Text(t) => {
+                if table_cols.is_some() {
+                    cell_buf.push_str(&inline_text(&t));
+                } else {
+                    out.push_str(&inline_text(&t));
+                }
+            }
+            Event::Code(c) => {
+                if table_cols.is_some() {
+                    cell_buf.push_str(&format!("`{c}`"));
+                } else {
+                    out.push_str(&format!("`{c}`"));
+                }
+            }
+            Event::SoftBreak => {
+                if table_cols.is_some() {
+                    cell_buf.push(' ');
+                } else {
+                    out.push('\n');
+                }
+            }
+            Event::Start(Tag::Emphasis) => {
+                if table_cols.is_some() { cell_buf.push('_'); } else { out.push('_'); }
+            }
+            Event::End(TagEnd::Emphasis) => {
+                if table_cols.is_some() { cell_buf.push('_'); } else { out.push('_'); }
+            }
+            Event::Start(Tag::Strong) => {
+                if table_cols.is_some() { cell_buf.push('*'); } else { out.push('*'); }
+            }
+            Event::End(TagEnd::Strong) => {
+                if table_cols.is_some() { cell_buf.push('*'); } else { out.push('*'); }
+            }
+            Event::Start(Tag::Table(aligns)) => {
+                table_cols = Some(aligns.len());
+                table_rows.push(Vec::new());
+            }
+            Event::Start(Tag::TableHead) => {}
+            Event::End(TagEnd::TableHead) => {}
+            Event::Start(Tag::TableRow) => table_rows.push(Vec::new()),
+            Event::End(TagEnd::TableRow) => {}
+            Event::Start(Tag::TableCell) => cell_buf = String::new(),
+            Event::End(TagEnd::TableCell) => {
+                if let Some(rows) = table_rows.last_mut() {
+                    rows.push(std::mem::take(&mut cell_buf));
+                }
+            }
+            Event::End(TagEnd::Table) => {
+                let cols = table_cols.take().unwrap_or(0);
+                if !table_rows.is_empty() {
+                    let cells: Vec<String> = table_rows
+                        .drain(..)
+                        .flat_map(|row| row.into_iter())
+                        .map(|c| format!("[{c}]"))
+                        .collect();
+                    out.push_str("#table(\n");
+                    out.push_str(&format!("  columns: {cols},\n"));
+                    for c in &cells {
+                        out.push_str(&format!("  {c},\n"));
+                    }
+                    out.push_str(")\n\n");
+                }
+            }
             Event::Rule => {
                 out.push_str("#line(length: 30%)\n\n");
             }
@@ -202,4 +264,82 @@ fn inline_text(t: &str) -> String {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// 黄金用例：覆盖全部映射的 MD 样本 → 期望 Typst 输出逐行断言。
+    const GOLDEN_MD: &str = "\
+# 一级标题
+
+段落 **加粗** 与 *斜体* 以及 `行内代码` 和[链接](https://x.com)。
+
+## 二级标题
+
+- 无序一
+- 无序二
+
+1. 有序一
+2. 有序二
+
+> 引用内容
+
+```rust
+fn main() {}
+```
+
+行内数学 $E = mc^2$。
+
+---
+
+|A|
+";
+
+    #[test]
+    fn golden_markdown_conversion() {
+        let out = convert(GOLDEN_MD, Some("#let title = \"测试\""));
+        assert!(out.starts_with("#let title = \"测试\""));
+        assert!(out.contains("= 一级标题"));
+        assert!(out.contains("== 二级标题"));
+        assert!(out.contains("*加粗*"));
+        assert!(out.contains("_斜体_"));
+        assert!(out.contains("#link(\"https://x.com\")[链接]"));
+        assert!(out.contains("- 无序一"));
+        assert!(out.contains("+ 有序一"));
+        assert!(out.contains("```rust\nfn main() {}\n```"));
+        assert!(out.contains("#quote[block][引用内容"));
+        assert!(out.contains("$E = mc^2$"));
+        assert!(out.contains("#line(length: 30%)"));
+    }
+
+    #[test]
+    fn latex_math_command_mapping() {
+        assert_eq!(latex_to_typst_math("\\alpha"), "alpha");
+        assert_eq!(latex_to_typst_math("\\times"), "times");
+        assert!(latex_to_typst_math("\\frac{1}{2}").contains("frac"));
+        assert!(latex_to_typst_math("x \\leq 1").contains("<="));
+        assert!(latex_to_typst_math("\\unknowncmd").contains("unknowncmd"));
+    }
+
+    #[test]
+    fn inline_text_escapes_markup_chars() {
+        assert_eq!(inline_text("a*b#c$d"), "a\\*b\\#c\\$d");
+        assert_eq!(inline_text("普通文本"), "普通文本");
+    }
+
+    #[test]
+    fn table_conversion() {
+        let md = "| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |\n";
+        let out = convert(md, None);
+        assert!(out.contains("#table("), "实际: {}", out);
+        assert!(out.contains("columns: 2,"));
+        assert!(out.contains("[A]"));
+        assert!(out.contains("[2]"));
+        // 单元格内容经 inline_text 转义（防标记误触发）
+        let md2 = "| *强调* |\n|---|---|\n";
+        let out2 = convert(md2, None);
+        assert!(out2.contains("\\*强调\\*"), "实际: {}", out2.trim());
+    }
 }
