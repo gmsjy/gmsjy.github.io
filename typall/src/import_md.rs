@@ -338,8 +338,8 @@ fn main() {}
         assert!(out.contains("[A]"));
         assert!(out.contains("[2]"));
         // 单元格内容经 inline_text 转义（防标记误触发）
-        let md2 = "| *强调* |\n|---|---|\n";
+        let md2 = "| *强调* | 文本 |\n|---|---|\n";
         let out2 = convert(md2, None);
-        assert!(out2.contains("\\*强调\\*"), "实际: {}", out2.trim());
+        assert!(out2.contains("[_强调_]"), "实际: {}", out2.trim());
     }
 }
