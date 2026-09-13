@@ -341,8 +341,8 @@ fn deploy_git(root: &Path, config: &Config, dry_run: bool) -> anyhow::Result<()>
     let pushed = !repo.is_empty() && git.auto_push;
     if pushed {
         if has_changes {
-            git_cmd(&tmp, &["push", "origin", &format!("HEAD:{branch}")])?;
-            git_cmd(&tmp, &["push", "origin", &tag])?;
+            git_push_retry(&tmp, &["push", "origin", &format!("HEAD:{branch}")])?;
+            git_push_retry(&tmp, &["push", "origin", &tag])?;
             println!("✅ 已部署到远程 {branch}（标签 {tag}）");
         } else {
             println!("✅ 远程 {branch} 已是最新（无内容变化）");
@@ -375,6 +375,29 @@ fn git_cmd(dir: &Path, args: &[&str]) -> anyhow::Result<()> {
         );
     }
     Ok(())
+}
+
+/// 带退避重试的 git push：对端瞬时抖动（连接重置/超时/DNS 失败）很常见，
+/// 一次失败就报错会中断整个部署。共尝试 3 次（间隔 3s/6s 递增）。
+/// 注意：这只兜「抖动」；网络被持续阻断时 3 次同样失败——那种情况交给
+/// 外层的定时重试（或用户恢复网络后重新 `typall deploy`）。
+fn git_push_retry(dir: &Path, args: &[&str]) -> anyhow::Result<()> {
+    const MAX_ATTEMPTS: u32 = 3;
+    let mut last_err = None;
+    for attempt in 1..=MAX_ATTEMPTS {
+        match git_cmd(dir, args) {
+            Ok(()) => return Ok(()),
+            Err(e) => {
+                last_err = Some(e);
+                if attempt < MAX_ATTEMPTS {
+                    let wait = 3u64 * u64::from(attempt);
+                    eprintln!("⚠️ push 失败（第 {attempt}/{MAX_ATTEMPTS} 次），{wait}s 后自动重试…");
+                    std::thread::sleep(std::time::Duration::from_secs(wait));
+                }
+            }
+        }
+    }
+    Err(last_err.expect("至少尝试一次"))
 }
 
 fn git_output(dir: &Path, args: &[&str]) -> anyhow::Result<String> {
