@@ -65,35 +65,40 @@ pub fn build(root: &Path, config: &Config, cli_include_drafts: bool) -> anyhow::
             .ok()
             .and_then(|text| serde_json::from_str(&text).ok())
             .unwrap_or_default();
-        for post in &posts {
-            if crate::social_card::first_image_path(&post.body_html).is_some() {
+        // 卡片供 posts 与 pages 共用：两者都走 render_article，og_image_for
+        // 对无首图文档一律回退分享卡——只给 posts 生成会让页面的 og:image 404。
+        let card_docs: Vec<&CompiledDoc> = posts.iter().chain(pages.iter()).collect();
+        for doc in &card_docs {
+            if crate::social_card::first_image_path(&doc.body_html).is_some() {
                 continue;
             }
-            let date = post.meta.date.clone().unwrap_or_default();
+            let date = doc.meta.date.clone().unwrap_or_default();
             let key = content_hash(&format!(
                 "{}|{}|{}|{}|{}",
-                post_title(post),
+                post_title(doc),
                 config.site.title,
                 date,
                 accent,
                 env!("CARGO_PKG_VERSION")
             ));
-            if card_map.get(&post.slug) == Some(&key)
-                && writer.out.join(og_card_filename(&post.slug)).exists()
+            if card_map.get(&doc.slug) == Some(&key)
+                && writer.out.join(og_card_filename(&doc.slug)).exists()
             {
                 // 复用既有卡片：仍需登记路径，否则孤儿清理会将其删除
-                writer.mark(&og_card_filename(&post.slug));
+                writer.mark(&og_card_filename(&doc.slug));
                 continue;
             }
             let png = crate::social_card::render_card_png(
-                &post_title(post),
+                &post_title(doc),
                 &config.site.title,
                 &date,
                 &accent,
             )?;
-            writer.write(&og_card_filename(&post.slug), &png)?;
-            card_map.insert(post.slug.clone(), key);
+            writer.write(&og_card_filename(&doc.slug), &png)?;
+            card_map.insert(doc.slug.clone(), key);
         }
+        // 已删除文章/页面的指纹条目随之清理，cards.json 不无限增长
+        card_map.retain(|slug, _| card_docs.iter().any(|d| d.slug == *slug));
         if let Some(parent) = card_map_path.parent() {
             std::fs::create_dir_all(parent)?;
         }

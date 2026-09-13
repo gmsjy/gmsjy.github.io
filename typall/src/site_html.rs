@@ -10,6 +10,8 @@
 //! 3. 图片懒加载 + alt 兜底。
 //! 4. SVG 墨色 → currentColor（暗色主题下公式/插图随 CSS 文字色，引擎层根治）。
 
+use std::collections::HashSet;
+
 use crate::theme;
 
 /// 正文 HTML 后处理：
@@ -23,13 +25,14 @@ use crate::theme;
 pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
     // --- 1. heading 锚点 + TOC ---
     let mut headings: Vec<(u8, String, String)> = Vec::new(); // (level, id, text)
+    let mut seen_ids: HashSet<String> = HashSet::new();
     let mut out = String::with_capacity(body_html.len());
     let mut rest = body_html;
     while let Some(start) = rest.find("<h") {
         // 定位 <h2 / <h3 开标签
         let Some(tag_end) = rest[start..].find('>') else { break };
         let tag = &rest[start..start + tag_end];
-        let level = tag[2..3].parse::<u8>().unwrap_or(0);
+        let level = tag.get(2..3).and_then(|s| s.parse::<u8>().ok()).unwrap_or(0);
         if !(2..=3).contains(&level) {
             out.push_str(&rest[..start + tag_end + 1]);
             rest = &rest[start + tag_end + 1..];
@@ -44,7 +47,15 @@ pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
         // 锚点与 TOC 基于纯文本：标题里的 *强调* 会输出 <em>、行内公式输出
         // 整段 MathML，直接 slugify/展示会把标签残骸吞进 id（如 `-em-斜率-em-`）。
         let text = strip_html(raw);
-        let id = slugify(&text);
+        // 去重：同名（或 slugify 后相同）的标题加 `-2`/`-3` 后缀，
+        // 否则 DOM 出现重复 id，TOC 链接永远只跳到第一个。
+        let base = slugify(&text);
+        let mut id = base.clone();
+        let mut n = 1usize;
+        while !seen_ids.insert(id.clone()) {
+            n += 1;
+            id = format!("{base}-{n}");
+        }
 
         // 写入开标签（带 id）+ 原始标题内容 + 闭标签（正文展示保留原排版）
         out.push_str(&rest[..start]);
@@ -91,9 +102,10 @@ pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
         let p_close = "</p>";
         debug_assert!(rest.starts_with(p_open));
         // 探查本段是否 `&gt;` 起头（用 strip_prefix 而非字节切片，避免中文
-        // 多字节字符切在非 char 边界 panic）。
+        // 多字节字符切在非 char 边界 panic）。后随空白（或为段尾）才算引用：
+        // `>50%`、`>= 3` 这类以字面 `>` 开头的普通文本不升级也不剥字符。
         let body_after_open = rest.strip_prefix(p_open).unwrap_or("");
-        let is_quote = body_after_open.starts_with("&gt;");
+        let is_quote = quote_marker_stripped(body_after_open).is_some();
         if is_quote {
             out_quote.push_str("<blockquote>");
             loop {
@@ -109,10 +121,9 @@ pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
                 let para_full = &rest[..close_pos + p_close.len()];
                 // 剥开标签取内文
                 let inner = &para_full[p_open.len()..para_full.len() - p_close.len()];
-                // 剥 `&gt;` 后所有前导空格（typst `> ` 与 `>  内容` 都兼容）
-                let stripped = inner
-                    .strip_prefix("&gt;")
-                    .map(|s| s.trim_start_matches(' '))
+                // 剥 `&gt;` 与其后的空白（typst `> ` 与 pretty 输出的换行都兼容）
+                let stripped = quote_marker_stripped(inner)
+                    .map(str::trim_start)
                     .unwrap_or(inner);
                 out_quote.push_str("<p>");
                 out_quote.push_str(stripped);
@@ -123,7 +134,7 @@ pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
                 rest = &rest[spaces..];
                 // 探查下一段是否仍为 quote
                 let next_after_open = rest.strip_prefix(p_open).unwrap_or("");
-                let next_is_quote = next_after_open.starts_with("&gt;");
+                let next_is_quote = quote_marker_stripped(next_after_open).is_some();
                 if !next_is_quote || !rest.starts_with(p_open) {
                     break;
                 }
@@ -215,16 +226,17 @@ pub(crate) fn postprocess_body(body_html: &str) -> (String, String) {
 /// 公众号/知乎路径不经过本模块，导出物保留黑色不受影响。
 /// 彩色笔画（品牌红/灰等）不在映射表，原样保留。
 pub(crate) fn svg_ink_to_current_color(html: &str) -> String {
-    // (源属性串, 替换属性串) —— 顺序无关：带引号的完整属性匹配不会互相误伤
+    // (源属性串, 替换属性串) —— 顺序无关：带引号的完整属性匹配不会互相误伤。
+    // 注意 hex 带 `#` 前缀（typst-svg 的 Color::to_hex 输出 `#000000` 形态）。
     const MAP: &[(&str, &str)] = &[
-        (r##"fill="000000""##, r##"fill="currentColor""##),
-        (r##"stroke="000000""##, r##"stroke="currentColor""##),
-        (r##"fill="00000026""##, r##"fill="currentColor" fill-opacity="0.15""##),
-        (r##"stroke="00000040""##, r##"stroke="currentColor" stroke-opacity="0.25""##),
-        (r##"stroke="00000047""##, r##"stroke="currentColor" stroke-opacity="0.28""##),
-        (r##"stroke="0000004c""##, r##"stroke="currentColor" stroke-opacity="0.3""##),
-        (r##"stroke="00000059""##, r##"stroke="currentColor" stroke-opacity="0.35""##),
-        (r##"stroke="00000073""##, r##"stroke="currentColor" stroke-opacity="0.45""##),
+        (r##"fill="#000000""##, r##"fill="currentColor""##),
+        (r##"stroke="#000000""##, r##"stroke="currentColor""##),
+        (r##"fill="#00000026""##, r##"fill="currentColor" fill-opacity="0.15""##),
+        (r##"stroke="#00000040""##, r##"stroke="currentColor" stroke-opacity="0.25""##),
+        (r##"stroke="#00000047""##, r##"stroke="currentColor" stroke-opacity="0.28""##),
+        (r##"stroke="#0000004c""##, r##"stroke="currentColor" stroke-opacity="0.3""##),
+        (r##"stroke="#00000059""##, r##"stroke="currentColor" stroke-opacity="0.35""##),
+        (r##"stroke="#00000073""##, r##"stroke="currentColor" stroke-opacity="0.45""##),
     ];
     let mut out = html.to_string();
     for (from, to) in MAP {
@@ -233,6 +245,14 @@ pub(crate) fn svg_ink_to_current_color(html: &str) -> String {
         }
     }
     out
+}
+
+/// 段落文本是否以引用标记（`&gt;` + 空白，或恰为 `&gt;`）开头。
+/// 命中返回剥掉标记后的剩余文本；`>50%`、`>= 3` 这类后随非空白的
+/// 字面 `>` 文本返回 None（不升级为 blockquote、不剥字符）。
+fn quote_marker_stripped(text: &str) -> Option<&str> {
+    text.strip_prefix("&gt;")
+        .filter(|rest| rest.is_empty() || rest.starts_with(char::is_whitespace))
 }
 
 pub(crate) fn strip_html(html: &str) -> String {
@@ -374,27 +394,24 @@ mod tests {
 
     #[test]
     fn svg_ink_rewrites_black_to_current_color() {
-        // {q}/{b} 占位：Rust format! 捕获 char 变量（q=双引号, b=反斜杠）
-        let q = char::from_u32(34).unwrap();
-        
-        let cases: Vec<(String, String)> = vec![
-            (format!("fill={q}000000{q}"), format!("fill={q}currentColor{q}")),
-            (format!("stroke={q}000000{q}"), format!("stroke={q}currentColor{q}")),
-            (format!("fill={q}00000026{q}"), format!("fill={q}currentColor{q} fill-opacity={q}0.15{q}")),
-            (format!("stroke={q}0000004c{q}"), format!("stroke={q}currentColor{q} stroke-opacity={q}0.3{q}")),
-            (format!("stroke={q}00000073{q}"), format!("stroke={q}currentColor{q} stroke-opacity={q}0.45{q}")),
+        // 源串模拟 typst-svg 真实输出：hex 带 `#` 前缀（Color::to_hex）。
+        // (属性名, 源色值, 期望的属性串整体)
+        let cases: &[(&str, &str, &str)] = &[
+            ("fill", "#000000", "currentColor"),
+            ("stroke", "#000000", "currentColor"),
+            ("fill", "#00000026", "currentColor\" fill-opacity=\"0.15"),
+            ("stroke", "#00000040", "currentColor\" stroke-opacity=\"0.25"),
+            ("stroke", "#0000004c", "currentColor\" stroke-opacity=\"0.3"),
+            ("stroke", "#00000073", "currentColor\" stroke-opacity=\"0.45"),
         ];
-        for (from, to) in &cases {
-            let html = format!("<path {from}/>");
+        for (attr, hex, expect) in cases {
+            let html = format!("<path {attr}=\"{hex}\"/>");
             let out = svg_ink_to_current_color(&html);
-            assert!(out.contains(to), "未重写: {from} => {out}");
+            assert!(out.contains(&format!("{attr}=\"{expect}")), "未重写: {html} => {out}");
         }
         // 彩色笔画保留
-        let keep = "<path stroke={q}#d64541{q} fill={q}#aaaaaa{q}/>".replace("{q}", &q.to_string());
-        assert_eq!(svg_ink_to_current_color(&keep), keep);
-        // 8 位 alpha 变体命中重映射并带透明度
-        let alpha = "<path stroke={q}0000004c{q}/>".replace("{q}", &q.to_string());
-        assert!(svg_ink_to_current_color(&alpha).contains("stroke-opacity"));
+        let keep = r##"<path stroke="#d64541" fill="#aaaaaa"/>"##;
+        assert_eq!(svg_ink_to_current_color(keep), keep);
     }
 
     #[test]
@@ -523,5 +540,27 @@ mod tests {
         // typst 渲染时 `> ` 后可能带空格，需兼容。
         let (out, _) = postprocess_body("<p>&gt;  带空格</p>");
         assert!(out.contains("<blockquote><p>带空格</p></blockquote>"));
+    }
+
+    #[test]
+    fn postprocess_keeps_literal_gt_paragraphs_as_text() {
+        // 回归：`>50%`、`>= 3` 这类以字面 `>` 开头的普通文本曾被误判为引用，
+        // 整段升级 blockquote 且首字符被无痕删除（`>= 3` 变 `= 3`）。
+        let body = "<p>&gt;50% 的用户</p><p>&gt;= 3 个</p>";
+        let (out, _) = postprocess_body(body);
+        assert!(!out.contains("blockquote"), "实际: {out}");
+        assert!(out.contains("<p>&gt;50% 的用户</p>"));
+        assert!(out.contains("<p>&gt;= 3 个</p>"));
+    }
+
+    #[test]
+    fn postprocess_dedupes_duplicate_heading_ids() {
+        // 回归：同名标题曾产生重复 DOM id，TOC 跳转永远命中第一个。
+        let body = "<h2>示例</h2><p>a</p><h2>示例</h2><p>b</p>";
+        let (out, toc) = postprocess_body(body);
+        assert!(out.contains("<h2 id=\"示例\">"));
+        assert!(out.contains("<h2 id=\"示例-2\">"));
+        assert!(toc.contains("href=\"#示例\""));
+        assert!(toc.contains("href=\"#示例-2\""));
     }
 }

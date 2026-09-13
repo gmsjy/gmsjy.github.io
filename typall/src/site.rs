@@ -652,16 +652,20 @@ pub(crate) fn render_series_nav(theme: &Theme, nav: Option<&SeriesNav>) -> anyho
     theme.render_partial("series_nav", theme::DEFAULT_SERIES_NAV, text, html)
 }
 
-/// 集合页面导航链接（专栏 / 标签 / 归档），注入默认模板的 `{{nav_extra}}`。
+/// 集合页面导航链接（专栏 / 标签 / 分类 / 归档），注入默认模板的 `{{nav_extra}}`。
 pub(crate) fn nav_links(posts: &[CompiledDoc]) -> String {
     let has_series = posts.iter().any(|p| p.meta.series.is_some());
     let has_tags = posts.iter().any(|p| !p.meta.tags.is_empty());
+    let has_categories = posts.iter().any(|p| !p.meta.categories.is_empty());
     let mut s = String::new();
     if has_series {
         s.push_str(r#"<a href="/series/">专栏</a>"#);
     }
     if has_tags {
         s.push_str(r#"<a href="/tags/">标签</a>"#);
+    }
+    if has_categories {
+        s.push_str(r#"<a href="/categories/">分类</a>"#);
     }
     s.push_str(r#"<a href="/archive/">归档</a>"#);
     s
@@ -673,6 +677,26 @@ pub(crate) fn year_month(date: &Option<String>) -> String {
         Some(d) if !d.is_empty() => d.chars().take(7).collect(),
         _ => "未标注日期".to_string(),
     }
+}
+
+/// 标签/分类名 → URL slug 冲突检测（与 series 同口径）：slugify 会把
+/// `!`/`?`/`+` 等折叠为 `-`，不同名字可能解析出同一路径；不拦截时两个
+/// 集合页写同一路径，后写的静默覆盖先写的。
+fn check_slug_conflicts(
+    groups: &BTreeMap<String, Vec<&CompiledDoc>>,
+    kind: &str,
+    url_prefix: &str,
+) -> anyhow::Result<()> {
+    let mut slug_owner: BTreeMap<String, &str> = BTreeMap::new();
+    for name in groups.keys() {
+        let slug = slugify(name);
+        if let Some(prev) = slug_owner.insert(slug.clone(), name) {
+            anyhow::bail!(
+                "{kind} slug 冲突：「{prev}」与「{name}」都解析为 /{url_prefix}/{slug}/，请修改其中一个名字"
+            );
+        }
+    }
+    Ok(())
 }
 
 /// 生成集合页面：标签云、分类页、日期归档（规格书 §2.1）。
@@ -699,6 +723,9 @@ pub(crate) fn generate_collections(
 
     // 标签云 + 每个标签页
     if !tags.is_empty() {
+        // slug 冲突检测（与 series 同口径）：否则两个标签页写同一路径，
+        // 后写的静默覆盖先写的，站内链接指向错误内容。
+        check_slug_conflicts(&tags, "标签", "tags")?;
         let cloud = render_cloud(theme, "标签", "tags", &tags)?;
         let seo = SeoInfo { path: "/tags/", og_type: "website", description: "", og_image: None, date: None, updated: None };
         let html = page(theme, config, "标签", &cloud, "", nav, Some(&seo), None, 1, 1, &[])?;
@@ -718,6 +745,7 @@ pub(crate) fn generate_collections(
 
     // 分类列表 + 每个分类页
     if !categories.is_empty() {
+        check_slug_conflicts(&categories, "分类", "categories")?;
         let cloud = render_cloud(theme, "分类", "categories", &categories)?;
         let seo = SeoInfo { path: "/categories/", og_type: "website", description: "", og_image: None, date: None, updated: None };
         let html = page(theme, config, "分类", &cloud, "", nav, Some(&seo), None, 1, 1, &[])?;

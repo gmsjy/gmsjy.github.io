@@ -35,8 +35,10 @@ pub fn atom_feed(
             xml_escape(&item.title),
             xml_escape(&item.link),
             xml_escape(&item.link),
-            iso,
-            iso,
+            // 日期来自文章 meta（用户可控，normalize_date 对自由文本原样
+            // 保留），与其余插值一样必须过转义。
+            xml_escape(&iso),
+            xml_escape(&iso),
             content_block,
         ));
     }
@@ -80,7 +82,7 @@ pub fn sitemap(urls: &[SitemapEntry]) -> String {
             let iso = to_iso(date);
             if !iso.is_empty() {
                 body.push_str("<lastmod>");
-                body.push_str(&iso);
+                body.push_str(&xml_escape(&iso));
                 body.push_str("</lastmod>");
             }
         }

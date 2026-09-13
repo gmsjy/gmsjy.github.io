@@ -94,6 +94,12 @@ fn render_node(node: TreeNode<'_>) -> anyhow::Result<String> {
         ));
     }
 
+    // 脚本/样式内容不是正文：公众号产物里输出会把源码当可见文字展示
+    // （与 markdown 目标 inline() 的跳过行为对齐）。
+    if name == "script" || name == "style" {
+        return Ok(String::new());
+    }
+
     // 常规元素：注入内联样式
     let style: &str = match name {
         "h1" => "font-size:22px;font-weight:bold;margin:30px 0 14px;color:#1a1a1a;",

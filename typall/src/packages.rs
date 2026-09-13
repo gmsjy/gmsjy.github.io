@@ -92,9 +92,14 @@ impl PackageResolver {
             }
             _ => {}
         }
-        resp.into_reader().read_to_end(&mut bytes).map_err(|e| {
-            FileError::Package(PackageError::NetworkFailed(Some(e.to_string().into())))
-        })?;
+        resp.into_reader()
+            // 体积上限：注册源异常/代理故障时防止响应体无限膨胀拖垮内存
+            // （官方包均在 MB 级，64MB 余量充足）。
+            .take(64 * 1024 * 1024)
+            .read_to_end(&mut bytes)
+            .map_err(|e| {
+                FileError::Package(PackageError::NetworkFailed(Some(e.to_string().into())))
+            })?;
 
         // 2. 解压到临时目录，成功后原子重命名到目标目录。
         let tmp = dir.with_file_name(format!(

@@ -219,19 +219,24 @@ fn render_zhihu(doc: &CompiledDoc, body_html: &str) -> String {
 
     // 公式渲染物占位与 MathItem 配对：逐个替换为 LaTeX span
     let mut html = body_html.to_string();
-    if !doc.math.is_empty() {
-        // 公式渲染物按序替换为 LaTeX 形态（知乎公式）；数量不匹配（动态
-        // 生成公式等罕见场景）时保守保留原渲染物
-        replace_math_with_latex_zhihu(&mut html, &doc.math);
+    if !doc.math.is_empty()
+        && !replace_math_with_latex_zhihu(&mut html, &doc.math)
+    {
+        // 知乎编辑器会剥离 svg（见 wechat 模块注记），回退产物公式必空白——
+        // 至少提示作者，避免静默产出残缺内容。
+        eprintln!(
+            "⚠️ [{}] 公式配对失败（渲染物与源码数量不一致），知乎产物公式保留原始 SVG（发布后可能显示空白）",
+            doc.slug
+        );
     }
 
+    // 标题/日期走 HTML 文本上下文，必须转义（scraper/编辑器解析吃掉裸 `<`）。
     let mut out = String::with_capacity(html.len() + 512);
-    let _ = writeln!(out, "<h1>{}</h1>", doc.meta.title);
+    let _ = writeln!(out, "<h1>{}</h1>", crate::theme::escape(&doc.meta.title));
     if let Some(d) = &doc.meta.date {
-        let _ = writeln!(out, "<p><em>{}</em></p>", d);
+        let _ = writeln!(out, "<p><em>{}</em></p>", crate::theme::escape(d));
     }
     let _ = write!(out, "{}", html);
-    let _ = doc.meta.updated;
     out
 }
 
@@ -247,6 +252,9 @@ fn replace_math_with_latex_zhihu(html: &mut String, math: &[crate::ir::MathItem]
     let mut out = marked;
     for (i, item) in math.iter().enumerate() {
         let latex = crate::latex::typst_math_to_latex(&item.source);
+        // LaTeX 进入 HTML 文本上下文（编辑器解析后才是知乎公式载荷）：
+        // 裸 `<`（如 `a < b`）会被当未知标签吞掉公式及后续内容，必须转义。
+        let latex = crate::theme::escape(&latex);
         let replacement = if item.block {
             format!(r#"<p>$$ {} $$</p>"#, latex)
         } else {
@@ -394,9 +402,10 @@ pub fn publish(
     for doc in &docs {
         // 引擎统一做资产提取：data URI 图片落盘为内容寻址文件，
         // 正文 src 重写为相对路径（Markdown / 富文本平台都需要）。
+        // dry-run 只读：指纹依赖重写后的正文，重写照算，只是不落盘。
         let depth = doc.slug.matches('/').count();
         let assets_dir = out_root.join("assets");
-        let (body_html, assets) = extract_data_uri_images(&doc.body_html, &assets_dir, depth)?;
+        let (body_html, assets) = extract_data_uri_images(&doc.body_html, &assets_dir, depth, !dry_run)?;
 
         // 判重前移（P1-2）：编译指纹在平台渲染前计算，内容未变的文档直接跳过。
         let fp = doc_fingerprint(doc, &body_html);
@@ -449,21 +458,25 @@ pub fn publish(
 
     // 清理孤儿文件：源文章删除后，旧的导出残留无意义。
     // assets/ 是内容寻址共享目录（跨文档去重），不参与孤儿清理。
-    for entry in walkdir::WalkDir::new(&out_root)
-        .into_iter()
-        .filter_entry(|e| e.file_name() != std::ffi::OsStr::new("assets"))
-    {
-        let Ok(entry) = entry else { continue };
-        if !entry.file_type().is_file() {
-            continue;
-        }
-        let rel = entry
-            .path()
-            .strip_prefix(&out_root)?
-            .to_string_lossy()
-            .replace('\\', "/");
-        if !written.contains(&rel) {
-            std::fs::remove_file(entry.path())?;
+    // --slug 局部发布时跳过：written 只含本次命中的文档，清理会把同目标
+    // 下其他文章的既有产物误删（数据丢失）。
+    if slug_filter.is_none() {
+        for entry in walkdir::WalkDir::new(&out_root)
+            .into_iter()
+            .filter_entry(|e| e.file_name() != std::ffi::OsStr::new("assets"))
+        {
+            let Ok(entry) = entry else { continue };
+            if !entry.file_type().is_file() {
+                continue;
+            }
+            let rel = entry
+                .path()
+                .strip_prefix(&out_root)?
+                .to_string_lossy()
+                .replace('\\', "/");
+            if !written.contains(&rel) {
+                std::fs::remove_file(entry.path())?;
+            }
         }
     }
 
@@ -530,17 +543,26 @@ fn show_status(root: &Path, slug_filter: Option<&str>) -> anyhow::Result<()> {
 /// `src="data:image/<t>;base64,<payload>"` 解码写盘为
 /// `assets/<fnv8>.<ext>`（相同内容天然去重），`src` 重写为从文档
 /// 所在目录到资产目录的相对路径（按 slug 深度回溯 `../`）。
+/// `write_assets` 为假时只重写正文不落盘（dry-run 保持只读）。
 /// 返回（重写后的 HTML, 资产相对目标输出目录的路径列表）。
 fn extract_data_uri_images(
     body_html: &str,
     assets_dir: &Path,
     slug_depth: usize,
+    write_assets: bool,
 ) -> anyhow::Result<(String, Vec<String>)> {
     const MARK: &str = "data:image/";
     let mut out = String::with_capacity(body_html.len());
     let mut rest = body_html;
     let mut assets: Vec<String> = Vec::new();
     while let Some(pos) = rest.find(MARK) {
+        // 只改写 `src="data:image/` 形态的属性值：正文 `<pre>` 里展示的
+        // data URI 示例等非属性上下文原样保留（裸扫会把示例当图片拆走）。
+        if !rest[..pos].ends_with("src=\"") {
+            out.push_str(&rest[..pos + MARK.len()]);
+            rest = &rest[pos + MARK.len()..];
+            continue;
+        }
         let tail = &rest[pos..];
         // data URI 必须以属性引号收尾，否则不是 img src（防御性跳过）。
         let Some(end_rel) = tail.find('"') else { break };
@@ -554,7 +576,7 @@ fn extract_data_uri_images(
         let name = format!("{}.{}", hash_bytes(&bytes), ext);
         let rel = format!("assets/{name}");
         let path = assets_dir.join(&name);
-        if !path.exists() {
+        if write_assets && !path.exists() {
             std::fs::create_dir_all(assets_dir)?;
             std::fs::write(&path, &bytes)?;
         }
@@ -726,7 +748,9 @@ fn find_matching_close(html: &str, from: usize, tag: &str) -> Option<usize> {
         }
         if html[i..].starts_with(&open) {
             let after = html[i + open.len()..].chars().next();
-            if after.is_none_or(|c| c.is_whitespace() || c == '>' || c == '/') {
+            // `<div/>` 自闭合标签不参与深度（与 parse_open_tag 的口径一致），
+            // 否则同名自闭合标签会让深度虚增、闭合位置后移甚至配对失败。
+            if after.is_some_and(|c| c.is_whitespace() || c == '>') {
                 depth += 1;
                 i += open.len();
                 continue;
@@ -942,7 +966,18 @@ fn code_block(node: TreeNode<'_>) -> String {
             collect_text(child, &mut code);
         }
     }
-    let fence = "`".repeat(3);
+    // 围栏至少 3 个反引号；代码内含连续反引号时加长，防止提前闭合截断内容。
+    let mut max_run = 0usize;
+    let mut run = 0usize;
+    for c in code.chars() {
+        if c == '`' {
+            run += 1;
+            max_run = max_run.max(run);
+        } else {
+            run = 0;
+        }
+    }
+    let fence = "`".repeat((max_run + 1).max(3));
     format!("{fence}{lang}\n{}\n{fence}", code.trim_end())
 }
 
@@ -1065,7 +1100,13 @@ fn inline(node: TreeNode<'_>) -> String {
                     let inner = inline_children(node);
                     match el.attr("href") {
                         Some(href) if !href.starts_with('#') => {
-                            format!("[{inner}]({href})")
+                            // URL 含空格/括号时会破坏 `(…)` 目标语法，CommonMark
+                            // 的 `<…>` 包裹形态兜底。
+                            if href.contains([' ', '(', ')']) {
+                                format!("[{inner}](<{href}>)")
+                            } else {
+                                format!("[{inner}]({href})")
+                            }
                         }
                         // 站内锚点（如公式引用"式 1"）在平台端无意义，只留文本。
                         _ => inner,
@@ -1269,7 +1310,7 @@ mod tests {
         let png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
         let html = format!(r#"<p><img src="{png}" alt="a">中 <img src="{png}" alt="b">重复</p>"#);
 
-        let (rewritten, list) = extract_data_uri_images(&html, &assets, 1).unwrap();
+        let (rewritten, list) = extract_data_uri_images(&html, &assets, 1, true).unwrap();
         // 同内容两次引用 → 一个资产文件。
         assert_eq!(list, vec![format!("assets/{}.png", {
             let (_, bytes) = decode_data_uri(png).unwrap();
@@ -1280,15 +1321,28 @@ mod tests {
         assert!(!rewritten.contains("data:image"));
         assert_eq!(std::fs::read_dir(&assets).unwrap().count(), 1);
         // 第二次调用：文件已存在不重写，列表一致（内容寻址幂等）。
-        let (_, list2) = extract_data_uri_images(&html, &assets, 1).unwrap();
+        let (_, list2) = extract_data_uri_images(&html, &assets, 1, true).unwrap();
         assert_eq!(list, list2);
 
         // 非 base64 的 data URI 原样保留。
         let (keep, none) =
-            extract_data_uri_images(r#"<img src="data:image/svg+xml;utf8,<svg/>">"#, &assets, 0)
+            extract_data_uri_images(r#"<img src="data:image/svg+xml;utf8,<svg/>">"#, &assets, 0, true)
                 .unwrap();
         assert!(none.is_empty() && keep.contains("data:image/svg+xml"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
+    #[test]
+    fn extract_keeps_data_uri_outside_src_attr() {
+        // 回归：`<pre>` 里展示的 data URI 示例曾被裸字符串扫描误改写为资产路径。
+        let dir = std::env::temp_dir().join(format!("typall-asset-ctx-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let assets = dir.join("assets");
+        let example = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+        let html = format!(r#"<pre><code>{example}</code></pre>"#);
+        let (out, list) = extract_data_uri_images(&html, &assets, 0, true).unwrap();
+        assert!(list.is_empty(), "示例代码不应产出资产: {list:?}");
+        assert!(out.contains(example), "示例代码应原样保留: {out}");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

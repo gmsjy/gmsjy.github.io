@@ -330,25 +330,37 @@ fn deploy_git(root: &Path, config: &Config, dry_run: bool) -> anyhow::Result<()>
         println!("无内容变化，跳过提交");
     }
 
-    // 5. 打标签（便于回滚）
+    // 5. 打标签（便于回滚）：仅在有新提交时——空部署反复打 tag 会向远端
+    //    灌入指向同一提交的无意义标签
     let tag = format!("deploy-{stamp}");
-    git_cmd(&tmp, &["tag", &tag])?;
-
-    // 6. 推送
-    if !repo.is_empty() && git.auto_push {
-        if has_changes {
-            git_cmd(&tmp, &["push", "origin", &format!("HEAD:{branch}")])?;
-        }
-        git_cmd(&tmp, &["push", "origin", &tag])?;
-        println!("✅ 已部署到远程 {branch}（标签 {tag}）");
-    } else if !repo.is_empty() {
-        println!("⚠️ auto_push 已关闭，未推送。仓库位于 {}", tmp.display());
-    } else {
-        println!("✅ 已在本地提交（标签 {tag}），未配置远程仓库");
+    if has_changes {
+        git_cmd(&tmp, &["tag", &tag])?;
     }
 
-    // 7. 清理临时目录（失败不阻塞，因为是临时文件）
-    let _ = std::fs::remove_dir_all(&tmp);
+    // 6. 推送
+    let pushed = !repo.is_empty() && git.auto_push;
+    if pushed {
+        if has_changes {
+            git_cmd(&tmp, &["push", "origin", &format!("HEAD:{branch}")])?;
+            git_cmd(&tmp, &["push", "origin", &tag])?;
+            println!("✅ 已部署到远程 {branch}（标签 {tag}）");
+        } else {
+            println!("✅ 远程 {branch} 已是最新（无内容变化）");
+        }
+    } else if !repo.is_empty() {
+        println!("⚠️ auto_push 已关闭，未推送。仓库保留在 {}", tmp.display());
+    } else if has_changes {
+        println!("✅ 已在本地提交（标签 {tag}），仓库保留在 {}（未配置远程仓库）", tmp.display());
+    } else {
+        println!("无内容变化，仓库保留在 {}（未配置远程仓库）", tmp.display());
+    }
+
+    // 7. 清理临时目录（失败不阻塞，因为是临时文件）。仅在完成推送后清理：
+    //    auto_push 关闭 / 未配 repo 时，临时仓库（含提交与标签）就是交付物，
+    //    删掉会让上面的提示变成谎言。
+    if pushed {
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
 
     Ok(())
 }

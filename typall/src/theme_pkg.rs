@@ -94,7 +94,16 @@ fn install_from_bytes(root: &Path, bytes: &[u8], source: &str) -> anyhow::Result
         let f = archive.by_index(i)?;
         let name = f.name().to_string();
         let segments: Vec<&str> = name.split('/').collect();
-        if segments.iter().any(|s| *s == ".." || s.contains('\\') || s.contains(':')) {
+        // 绝对路径条目（`/x`）与中部空段（`a//b`）同样非法：`Path::join` 遇到
+        // 带根的路径会丢弃基路径，解压会写出主题目录之外（zip-slip 变体）。
+        let empty_mid = segments
+            .iter()
+            .enumerate()
+            .any(|(i, s)| s.is_empty() && i + 1 != segments.len());
+        if name.starts_with('/')
+            || empty_mid
+            || segments.iter().any(|s| *s == ".." || s.contains('\\') || s.contains(':'))
+        {
             anyhow::bail!("主题包包含非法路径: {name}");
         }
         if let Some(first) = segments.first()
@@ -124,8 +133,11 @@ fn install_from_bytes(root: &Path, bytes: &[u8], source: &str) -> anyhow::Result
         anyhow::bail!("主题已存在: {}（如需覆盖请先手动删除）", dest.display());
     }
 
-    // 2. 解压
+    // 2. 解压（带总体积上限：下载侧只限压缩包大小，Deflate 高压缩比的
+    //    zip 炸弹在解压侧仍可膨胀数十 GB）
     std::fs::create_dir_all(&dest)?;
+    const MAX_UNCOMPRESSED: u64 = 200 * 1024 * 1024;
+    let mut total: u64 = 0;
     for i in 0..archive.len() {
         let mut f = archive.by_index(i)?;
         if f.is_dir() {
@@ -148,7 +160,11 @@ fn install_from_bytes(root: &Path, bytes: &[u8], source: &str) -> anyhow::Result
             std::fs::create_dir_all(parent)?;
         }
         let mut out = std::fs::File::create(&out_path)?;
-        std::io::copy(&mut f, &mut out)?;
+        total += std::io::copy(&mut f, &mut out)?;
+        if total > MAX_UNCOMPRESSED {
+            let _ = std::fs::remove_dir_all(&dest);
+            anyhow::bail!("主题包解压总体积超过 200MB 上限，已中止安装");
+        }
     }
 
     // 3. 完整性校验：至少 style.css 或 template.html 之一
@@ -218,6 +234,18 @@ mod tests {
         let root = std::env::temp_dir().join(format!("typall-theme-test3-{}", std::process::id()));
         let zip = make_zip(&[("../evil/style.css", "body{}")]);
         assert!(install_from_bytes(&root, &zip, "evil.zip").is_err());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn install_rejects_absolute_and_double_slash_entries() {
+        // 回归：`/evil.css` 的首段为空串，旧校验三项检查全放行；
+        // `Path::join` 遇带根路径会丢弃基路径，解压写出主题目录之外。
+        let root = std::env::temp_dir().join(format!("typall-theme-test5-{}", std::process::id()));
+        let zip = make_zip(&[("/evil.css", "body{}")]);
+        assert!(install_from_bytes(&root, &zip, "evil2.zip").is_err());
+        let zip2 = make_zip(&[("a//style.css", "body{}")]);
+        assert!(install_from_bytes(&root, &zip2, "evil3.zip").is_err());
         let _ = std::fs::remove_dir_all(&root);
     }
 

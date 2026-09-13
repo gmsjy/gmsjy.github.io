@@ -128,7 +128,17 @@ pub(crate) fn render_card_png(
 pub(crate) fn first_image_path(body_html: &str) -> Option<String> {
     let idx = body_html.find("<img")?;
     let rest = &body_html[idx..];
-    let src_pos = rest.find("src=\"")? + 5;
+    // `src="` 必须落在属性名位置（前一字符是空白）：`data-src="` 里的
+    // `src="` 子串不构成匹配，否则懒加载占位属性会抢先被当成首图。
+    let mut from = 0usize;
+    let src_pos = loop {
+        let rel = rest[from..].find("src=\"")? + from;
+        let before = rest.as_bytes().get(rel.wrapping_sub(1));
+        if before.is_some_and(|b| b.is_ascii_whitespace()) {
+            break rel + 5;
+        }
+        from = rel + 5;
+    };
     let tail = &rest[src_pos..];
     let end = tail.find('"')?;
     let src = &tail[..end];
@@ -141,11 +151,20 @@ pub(crate) fn first_image_path(body_html: &str) -> Option<String> {
 /// 把正文首图的相对路径归一化为站点绝对路径（以 `/` 开头）。
 ///
 /// 文章渲染物里的图片相对路径以文章目录（`/{slug 所在目录}/`）为基准
-/// （typst `image("../assets/x.png")` 语义）；绝对 URL 原样返回。
+/// （typst `image("../assets/x.png")` 语义）；绝对 URL 原样返回；
+/// 站点根相对（`/assets/x.png`）与协议相对（`//cdn.x/i.png`）按各自语义拼接。
 pub(crate) fn absolutize_og_image(slug: &str, src: &str, site_url: &str) -> Option<String> {
     let site_url = site_url.trim_end_matches('/');
     if src.starts_with("http://") || src.starts_with("https://") || src.starts_with("data:") {
         return Some(src.to_string());
+    }
+    // 协议相对：补 https（站点根相对的 `/` 前缀判断必须在 `//` 之后）
+    if let Some(rest) = src.strip_prefix("//") {
+        return Some(format!("https://{rest}"));
+    }
+    // 站点根相对：直接挂到域名下（不能按文章目录拼接，否则 404）
+    if src.starts_with('/') {
+        return Some(format!("{site_url}{src}"));
     }
     // slug 形如 `posts/foo` 或 `foo`；文章页 URL 为 `/{slug}/`。
     let base = format!("/{}/", slug.trim_end_matches('/'));
@@ -196,6 +215,13 @@ mod tests {
     }
 
     #[test]
+    fn first_image_skips_data_src_attribute() {
+        // 回归：`data-src="` 内的 `src="` 子串曾被误当首图属性
+        let html = r#"<img data-src="lazy.png" src="real.png">"#;
+        assert_eq!(first_image_path(html).as_deref(), Some("real.png"));
+    }
+
+    #[test]
     fn absolutize_handles_relative_and_absolute() {
         let url = "https://blog.example.com";
         // 标准 URL 解析语义：文章页 /posts/foo/ 基准下 `../assets/a.png`
@@ -210,6 +236,21 @@ mod tests {
         );
         assert_eq!(
             absolutize_og_image("posts/foo", "https://cdn.x/i.png", url).as_deref(),
+            Some("https://cdn.x/i.png")
+        );
+    }
+
+    #[test]
+    fn absolutize_handles_root_and_protocol_relative() {
+        let url = "https://blog.example.com";
+        // 站点根相对：挂到域名下，而非按文章目录拼接（曾产出 /posts/foo/assets/… 404）
+        assert_eq!(
+            absolutize_og_image("posts/foo", "/assets/cover.png", url).as_deref(),
+            Some("https://blog.example.com/assets/cover.png")
+        );
+        // 协议相对：补 https
+        assert_eq!(
+            absolutize_og_image("posts/foo", "//cdn.x/i.png", url).as_deref(),
             Some("https://cdn.x/i.png")
         );
     }

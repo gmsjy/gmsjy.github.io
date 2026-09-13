@@ -53,7 +53,12 @@ impl SiteWriter {
         // 原子写：先写同目录临时文件再 rename，`serve` 重建期间 HTTP 线程
         // 并发读 public/ 时不会读到写了一半的截断文件（与 publish 的
         // atomic_write 同思路）。
-        let tmp = full.with_extension("typall-tmp");
+        // 临时文件名追加（而非 with_extension 替换）扩展名：sitemap.xml 与
+        // sitemap.txt 这类仅扩展名不同的产物若共用 `sitemap.typall-tmp`，
+        // 并发构建时会互相覆盖/rename 竞争。
+        let mut tmp_name = full.as_os_str().to_os_string();
+        tmp_name.push(".typall-tmp");
+        let tmp = PathBuf::from(tmp_name);
         let written = std::fs::write(&tmp, content).and_then(|()| rename_with_retry(&tmp, &full));
         if let Err(e) = written {
             let _ = std::fs::remove_file(&tmp);
