@@ -95,11 +95,18 @@ impl CompileCache {
             .filter_map(|p| {
                 let dep_rel = p.strip_prefix(&self.root).ok()?;
                 // 二进制依赖（.wasm 等）也要落盘哈希，供下次字节级比对。
-                let content = std::fs::read(p).ok()?;
-                Some(DepHash {
-                    path: dep_rel.to_string_lossy().replace('\\', "/"),
-                    hash: hash_bytes(&content),
-                })
+                match std::fs::read(p) {
+    Ok(content) => Some(DepHash {
+        path: dep_rel.to_string_lossy().replace('\\', "/"),
+        hash: hash_bytes(&content),
+    }),
+    // 竞态兜底：依赖恰好不可读时跳过该条并留痕——缺失哈希意味着
+    // 该依赖未来的变更不会触发缓存失效，必须留痕排查。
+    Err(e) => {
+        eprintln!("⚠ 依赖不可读，未纳入缓存哈希：{} ({e})", p.display());
+        None
+    }
+}
             })
             .collect();
         let entry = CacheEntry {

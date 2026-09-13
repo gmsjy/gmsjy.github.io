@@ -54,12 +54,13 @@ typall build -C ~/blogs/physics        # 等价：参数放在子命令后
 |------|------|
 | `typall init [name]` | 创建项目脚手架（含示例文章、配置） |
 | `typall new <post>` | 在 `posts/` 下生成新文章模板 |
-| `typall build` | 构建站点到 `public/`（`--strict` 死链检查、`--drafts` 含草稿） |
+| `typall build` | 构建站点到 `public/`（`--strict` 死链检查、`--drafts` 含草稿、`--output` 自定义输出目录） |
 | `typall serve` | 开发服务器 + Live Reload（`--port` 端口、`--open` 开浏览器、`--host 0.0.0.0` 开放局域网并打印手机扫码二维码） |
 | `typall deploy` | 按配置部署（`--target` 临时覆盖、`--dry-run` 模拟） |
 | `typall publish --to markdown` | 将文章导出为 Markdown（单篇 → 平台，见「发布（publish）」） |
 | `typall publish --to zhihu` | 生成知乎可粘贴的富文本（公式转 LaTeX，见「发布（publish）」） |
 | `typall check` | 语法检查（不生成输出） |
+| `typall import <file.md>` | 导入 Markdown 文章并转换为 Typst 源（LaTeX 命令子集翻译，`--slug` 指定 slug） |
 | `typall list` | 文章清单：状态（已发布/草稿/定时）、日期、标题、slug |
 | `typall status` | 站点概况：文章统计、主题、site.url、上次构建、发布账本 |
 | `typall mv <old> <new>` | 重命名 slug 并自动写入 `aliases`（旧链接构建后自动跳转） |
@@ -138,15 +139,18 @@ typall deploy --target netlify --dry-run   # 仅打印将要调用的 API 与参
 |------|------|
 | `markdown` | 导出 Markdown + YAML frontmatter，到 `<out_dir>/markdown/<slug>.md` |
 | `wechat` | 生成微信公众号富文本 HTML 片段（内联样式 + SVG/公式栅格化为 PNG）到 `<out_dir>/wechat/<slug>.html` |
+| `zhihu` | 生成知乎可粘贴的富文本 HTML 片段（公式转 LaTeX，见「知乎目标说明」）到 `<out_dir>/zhihu/<slug>.html` |
 
 ```bash
 typall publish                                  # 全部文章 → publish/markdown/（--to 省略默认 markdown）
 typall publish --to wechat                      # → publish/wechat/（公众号富文本）
+typall publish --to zhihu                       # → publish/zhihu/（知乎富文本，公式转 LaTeX）
 typall publish --slug math-trig                 # 只发布一篇（slug 可写 posts/math-trig 或 math-trig）
 typall publish --output out/md                  # 自定义导出目录
 typall publish --drafts                         # 包含草稿
 typall publish --status                         # 查看发布状态库（.typall/publish.json）
 typall publish --force                          # 内容未变也强制重新发布
+typall publish --dry-run                        # 仅打印计划，不写盘、不改动状态库
 ```
 
 ### 微信目标说明
@@ -760,6 +764,8 @@ my-blog/
 ├── assets/         # 静态资源（图片、字体、宏）
 ├── themes/         # 自定义主题
 ├── .typall/        # 编译缓存与构建清单（可丢弃，`typall clean` 清除）
+├── publish/        # publish 导出产物（markdown/zhihu，可丢弃）
+├── .github/        # `typall ci github` 生成的部署工作流（可选）
 └── public/         # 构建输出（可丢弃）
 ```
 
@@ -828,7 +834,7 @@ Typall 基于 Typst 的 **HTML 导出**，该功能目前仍是实验性（Typst
 
 ## 技术栈
 
-Rust · Typst 0.15（内嵌编译）· rayon（并行）· axum（dev server）· notify（文件监听）· scraper（HTML 解析）· clap（CLI）
+Rust · Typst 0.15（内嵌编译）· rayon（并行）· axum + tokio（dev server / SSE）· notify（文件监听）· scraper（HTML 解析）· resvg（公式栅格化与分享卡）· pulldown-cmark（import 解析）· qrcodegen（局域网二维码）· serde_json · clap（CLI）
 
 ## 开发
 

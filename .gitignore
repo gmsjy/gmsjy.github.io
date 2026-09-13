@@ -8,3 +8,7 @@
 /.typall/
 /.zcode/
 /_shots/
+
+# 系列文章编译产物
+series/build/
+/target/

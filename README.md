@@ -7,10 +7,10 @@
 - **单二进制**：内嵌 Typst 编译器，无需 Typst CLI / Node.js / Python 等任何外部依赖
 - **数学公式**：内联 SVG（本仓库默认，公式编号完整渲染）或 MathML（引擎默认），完全离线、零客户端 JS
 - **手绘插图**：全部数理文章各配一幅 CeTZ 矢量示意图（受力分析、光路、函数曲线、轨道图……），随构建生成内联 SVG，支持暗色主题
-- **真增量编译**：源码 + preamble + import 依赖三级哈希缓存——99 篇文章全量 0.3s、增量 0.06s、改一篇只编一篇
+- **真增量编译**：源码 + preamble + import 依赖三级哈希缓存——103 篇文章全量 0.3s、增量 0.06s、改一篇只编一篇
 - **开箱即用的博客能力**：站内搜索 / SEO（canonical + OG）/ RSS 全文 / sitemap / 分页 / TOC / 标签分类归档 / 专栏（series 教材连载）/ gzip + brotli 预压缩 / Lazy Load
 - **主题系统**：CSS 层 + 骨架模板层解耦，9 个 partial 片段 + tera 循环条件，不改主程序即可换结构与外观
-- **多目标发布**：`publish` 单篇导出 Markdown / 公众号富文本（本地导出 + 「复制到公众号」按钮粘贴）；`pdf` 原生排版导出；`deploy` 整站部署（git / copy / netlify / vercel）
+- **多目标发布**：`publish` 单篇导出 Markdown / 公众号 / 知乎富文本（知乎公式转 LaTeX；本地导出 + 「复制到公众号 / 知乎」按钮粘贴）；`pdf` 原生排版导出；`deploy` 整站部署（git / copy / netlify / vercel）
 
 ## 快速开始
 
@@ -18,7 +18,7 @@
 # 构建二进制
 cargo build --release --manifest-path typall/Cargo.toml
 
-# 本仓库自带一个内容项目（posts/ 下 47 篇数理文章——「高中数学」24 篇、「高中物理」20 篇、「高中物理实验」3 篇，每篇配 CeTZ 手绘插图——另有「教学工具」专栏的 AiGGB 使用教程），可直接体验
+# 本仓库自带一个内容项目（posts/ 下 101 篇数理文章——「高中数学」24 篇、「高中物理」20 篇、「高中物理实验」3 篇、「数理衔接」三季 54 篇，每篇配 CeTZ 手绘插图——另有「教学工具」专栏的 AiGGB 使用教程），可直接体验
 cd typall
 ../target/release/typall build
 ../target/release/typall serve --open      # 浏览器打开 http://localhost:8080
@@ -69,6 +69,7 @@ typall build && typall serve --open
 | 看有哪些草稿/定时文章 | `typall list` |
 | 文章到点自动上线 | `typall ci github`（每日定时构建） |
 | 公众号发文 | `typall serve` 后点页面「复制到公众号」按钮 |
+| 知乎发文 | `typall serve` 后点「复制到知乎」按钮，或 `typall publish --to zhihu` 导出后粘贴 |
 
 ## 部署速览
 
@@ -98,6 +99,7 @@ docs/      设计文档
 | [docs/THEME-SPEC.md](docs/THEME-SPEC.md) | 主题系统规格（唯一权威文档：占位符 / partial / class 契约与稳定性承诺） |
 | [docs/THEME-GALLERY.md](docs/THEME-GALLERY.md) | 四套参考主题（曜石/纸砚/留白/柑橘）设计令牌与踩坑记录 |
 | [docs/COPY-TO-PLATFORM-DESIGN.md](docs/COPY-TO-PLATFORM-DESIGN.md) | 「复制到公众号 / 知乎」方案设计与进度 |
+| [docs/IMPORT-LATEX-EVAL.md](docs/IMPORT-LATEX-EVAL.md) | LaTeX 转换器覆盖率 + 真实博客迁移实测报告（2026-09-09） |
 | [docs/COMPAT.md](docs/COMPAT.md) | Typst 版本升级兼容假设清单（升级演练手册） |
 | [docs/TEST-REPORT.md](docs/TEST-REPORT.md) | 全链路回归测试报告 |
 

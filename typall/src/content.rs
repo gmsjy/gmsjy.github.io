@@ -37,6 +37,16 @@ pub fn extract_meta(source: &str) -> HashMap<String, MetaValue> {
     out
 }
 
+/// 日期规范化：接受 ISO 风格（允许省略前导零），统一输出 `YYYY-MM-DD`。
+/// 无法解析（自由文本）时原样返回——定时发布的字符串比较只有在
+/// 规范格式下才可靠（"2026-9-1" 与 "2026-10-01" 的字典序是错的）。
+fn normalize_date(s: &str) -> String {
+    match chrono::NaiveDate::parse_from_str(s.trim(), "%Y-%m-%d") {
+        Ok(d) => d.format("%Y-%m-%d").to_string(),
+        Err(_) => s.trim().to_string(),
+    }
+}
+
 fn to_value(expr: &ast::Expr) -> MetaValue {
     match expr {
         ast::Expr::Str(s) => MetaValue::Str(s.get().to_string()),
@@ -91,7 +101,7 @@ impl DocumentMeta {
             meta.title = s.clone();
         }
         if let Some(MetaValue::Str(s)) = map.get("date") {
-            meta.date = Some(s.clone());
+            meta.date = Some(normalize_date(s));
         }
         if let Some(MetaValue::Bool(b)) = map.get("draft") {
             meta.draft = *b;
@@ -128,7 +138,7 @@ impl DocumentMeta {
             meta.excerpt = Some(s.clone());
         }
         if let Some(MetaValue::Str(s)) = map.get("updated") {
-            meta.updated = Some(s.clone());
+            meta.updated = Some(normalize_date(s));
         }
         if let Some(MetaValue::Str(s)) = map.get("series") {
             meta.series = Some(s.clone());
@@ -172,17 +182,21 @@ pub fn plain_text(html: &str) -> String {
 /// 从 HTML 正文中截取纯文本摘要（去标签，在词边界截断）。
 pub fn auto_excerpt(body_html: &str, max_len: usize) -> String {
     let text = plain_text(body_html);
-    if text.len() <= max_len {
+    // 按字符计数（len() 是字节数，中文每字 3 字节会让摘要缩水到 1/3）。
+    if text.chars().count() <= max_len {
         return text;
     }
-    let mut end = max_len;
-    while end > 0 && !text.is_char_boundary(end) {
-        end -= 1;
-    }
-    if let Some(last_space) = text[..end].rfind(' ') {
+    // 第 max_len 个字符的字节偏移；截断点天然落在字符边界上。
+    let cut = text
+        .char_indices()
+        .nth(max_len)
+        .map(|(i, _)| i)
+        .unwrap_or(text.len());
+    // 优先回退到最近的空格，避免西文截断在词中间。
+    if let Some(last_space) = text[..cut].rfind(' ') {
         format!("{}…", &text[..last_space])
     } else {
-        format!("{}…", &text[..end])
+        format!("{}…", &text[..cut])
     }
 }
 
@@ -336,6 +350,30 @@ mod tests {
         assert_eq!(plain_text("<p>&amp;lt;</p>"), "&lt;");
         // &nbsp; 参与空白归一化
         assert_eq!(plain_text("<p>x&nbsp;&nbsp;y</p>"), "x y");
+    }
+
+    #[test]
+    fn auto_excerpt_counts_chars_not_bytes() {
+        // 中文每字 3 字节：若按字节截断，200「字」摘要只会剩 ~66 字。
+        let long = "中".repeat(300);
+        let excerpt = auto_excerpt(&long, 200);
+        assert_eq!(excerpt.chars().count(), 201); // 200 字 + 省略号
+        assert!(excerpt.ends_with('…'));
+    }
+
+    #[test]
+    fn date_normalized_to_padded_iso() {
+        let src = "#let title = \"t\"
+#let date = \"2026-9-1\"
+#let updated = \"2026-10-31\"
+";
+        let meta = DocumentMeta::from_map(&extract_meta(src));
+        assert_eq!(meta.date.as_deref(), Some("2026-09-01"));
+        assert_eq!(meta.updated.as_deref(), Some("2026-10-31"));
+        // 自由文本原样保留（不强行报错）
+        let free = DocumentMeta::from_map(&extract_meta("#let date = \"今年夏天\"
+"));
+        assert_eq!(free.date.as_deref(), Some("今年夏天"));
     }
 
     #[test]

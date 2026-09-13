@@ -16,6 +16,12 @@ use crate::cache::CompileCache;
 use crate::cache::content_hash;
 
 
+/// HTML 后处理流水线版本：凡改动影响 `body_html` 的逻辑（
+/// `inject_equation_numbers` / `split_body_and_style` / 公式 show rule 等）
+/// 必须 +1。它与 CARGO_PKG_VERSION 一起纳入缓存上下文哈希——否则升级后
+/// 旧缓存继续命中，站点输出陈旧 HTML 且无任何提示。
+const PIPELINE_VERSION: u32 = 1;
+
 /// 扫描 + 并行编译全部文章与独立页面（`build` 与 `publish` 共用的编译入口）。
 pub(crate) struct CompiledDocuments {
     pub posts: Vec<CompiledDoc>,
@@ -37,7 +43,11 @@ pub(crate) fn compile_documents(
 
     let preamble = math_preamble(config, root);
     // 编号前缀由 HTML 后处理注入（不在 preamble 内），必须纳入缓存上下文。
-    let context = format!("{preamble}[equation-prefix:{}]", config.build.math.equation_prefix);
+    let context = format!(
+        "{preamble}[equation-prefix:{}][pipeline:{PIPELINE_VERSION}:{}]",
+        config.build.math.equation_prefix,
+        env!("CARGO_PKG_VERSION")
+    );
     let cache = CompileCache::new(root, &context);
     let compile_one = |path: &PathBuf| {
         compile_doc(root, path, shared.clone(), &preamble, &config.build.math.renderer, config, Some(&cache))

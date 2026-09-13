@@ -458,6 +458,22 @@ fn format_mins(mins: i64) -> String {
 }
 
 /// slug 规范化：去 `posts/` 前缀与首尾斜杠，返回相对 posts/ 的纯名。
+/// slug 校验：拒空串、路径穿越、路径分隔符与引号/控制字符
+/// （防 frontmatter 注入与越界写文件）。`cmd_import` 等共用。
+fn validate_slug(slug: &str) -> anyhow::Result<()> {
+    if slug.is_empty() {
+        anyhow::bail!("slug 不能为空");
+    }
+    if slug.contains("..") {
+        anyhow::bail!("slug 不能包含 ..：{slug}");
+    }
+    let forbidden = ['/', '\\', '"', '\'', '<', '>', ':', '|', '?', '*'];
+    if let Some(c) = slug.chars().find(|c| forbidden.contains(c) || c.is_control()) {
+        anyhow::bail!("slug 含非法字符 `{c}`：{slug}");
+    }
+    Ok(())
+}
+
 fn normalize_slug(slug: &str) -> String {
     slug.trim_matches('/')
         .strip_prefix("posts/")
@@ -473,9 +489,7 @@ fn cmd_import(root: &Path, file: &str, slug: Option<&str>) -> anyhow::Result<()>
         .map(crate::import_slug_normalize)
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| format!("{}-{}", today(), import_slugify(base_name)));
-    if slug.is_empty() || slug.contains("..") {
-        anyhow::bail!("非法 slug：{slug}");
-    }
+    validate_slug(&slug)?;
     let markdown = std::fs::read_to_string(src_path)
         .map_err(|e| anyhow::anyhow!("读取 {file} 失败: {e}"))?;
 
@@ -525,43 +539,87 @@ fn split_yaml_front_matter(md: &str) -> (Option<String>, &str) {
     (Some(rest[..end].trim().to_string()), &rest[end + 4..])
 }
 
-/// YAML front-matter 的 title/date/tags 三键 → `#let` 元数据行。
+/// YAML front-matter → `#let` 元数据行。
+///
+/// 支持标量（title/date/author/series/excerpt/updated，description 归入
+/// excerpt）与列表（tags/categories/aliases，兼容 `[a, b]` 内联数组和
+/// `a, b` 逗号分隔两种写法）以及 draft 布尔。值中的双引号转义后输出；
+/// 无法识别的键忽略。多行/嵌套 YAML 不支持。
 fn yaml_front_to_typst(yaml: &Option<String>) -> Option<String> {
-    let qc = char::from_u32(34).unwrap();
-    let q = char::from_u32(39).unwrap();
     let yaml = yaml.as_ref()?;
     let mut lines = Vec::new();
+
+    // 值规整：去引号；列表值兼容 [a, b] 与 a, b 两种写法
+    fn clean(v: &str) -> String {
+        let v = v.trim();
+        let v = v.strip_prefix('[').unwrap_or(v);
+        let v = v.strip_suffix(']').unwrap_or(v);
+        v.trim().to_string()
+    }
+    fn unquote(v: &str) -> String {
+        clean(v).trim_matches(|c| c == '"').trim_matches(|c| c == '\'').to_string()
+    }
+    let esc = |s: &str| s.replace('\\', "\\\\").replace('"', "\\\"");
+    fn list(v: &str) -> Vec<String> {
+        let cleaned = clean(v);
+        cleaned
+            .split(',')
+            .map(|t| {
+                t.trim().trim_matches(|c| c == '"').trim_matches(|c| c == '\'').to_string()
+            })
+            .filter(|t| !t.is_empty())
+            .collect()
+    }
+
     for line in yaml.lines() {
         let Some((k, v)) = line.split_once(':') else { continue };
         let key = k.trim();
-        let val = v.trim().trim_matches(|c| c == qc || c == q);
+        // 值部分为空、或以 YAML 块标量/锚点开头（|, >, &, *）时跳过
+        let raw = v.trim();
+        if raw.is_empty()
+            || raw.starts_with(['|', '>', '&', '*', '{'])
+        {
+            continue;
+        }
+        let val = unquote(raw);
         match key {
             "title" | "date" | "author" | "series" | "excerpt" => {
                 if !val.is_empty() {
-                    lines.push(format!("#let {key} = \"{val}\""));
+                    lines.push(format!("#let {key} = \"{}\"", esc(&val)));
                 }
             }
-            "tags" => {
-                let tags: Vec<String> = val
-                    .split(',')
-                    .map(|t| t.trim().trim_matches(|c| c == qc || c == q).to_string())
-                    .filter(|t| !t.is_empty())
-                    .collect();
-                if !tags.is_empty() {
+            // Jekyll 的 description 与 Typall 的 excerpt 语义对应
+            "description" => {
+                if !val.is_empty() {
+                    lines.push(format!("#let excerpt = \"{}\"", esc(&val)));
+                }
+            }
+            "updated" => {
+                if !val.is_empty() {
+                    lines.push(format!("#let updated = \"{}\"", esc(&val)));
+                }
+            }
+            "tags" | "categories" | "aliases" => {
+                let items = list(raw);
+                if !items.is_empty() {
                     let quoted: Vec<String> =
-                        tags.iter().map(|t| format!("\"{t}\"")).collect();
-                    lines.push(format!("#let tags = ({})", quoted.join(", ")));
+                        items.iter().map(|t| format!("\"{}\"", esc(t))).collect();
+                    lines.push(format!("#let {key} = ({})", quoted.join(", ")));
                 }
             }
-            "draft" => lines.push(format!("#let draft = {val}")),
+            // Jekyll 风格的 yes/no/on/off 归一化为布尔——`#let draft = yes`
+            // 在 Typst 里是未定义标识符，会让整篇编译失败。
+            "draft" => {
+                let b = matches!(val.to_lowercase().as_str(), "true" | "yes" | "on" | "1");
+                lines.push(format!("#let draft = {b}"));
+            }
             _ => {}
         }
     }
     if lines.is_empty() {
         None
     } else {
-        Some(lines.join("
-"))
+        Some(lines.join("\n"))
     }
 }
 
@@ -596,38 +654,52 @@ fn cmd_mv(root: &Path, old: &str, new: &str) -> anyhow::Result<()> {
         lines.insert(fm_end, format!("#let aliases = ({alias_entry},)"));
         source = lines.join("\n") + "\n";
     } else {
-        // 已有 aliases 行：把旧 slug 追加进元组
-        let mut replaced = false;
-        source = source
-            .lines()
-            .map(|l| {
-                if !replaced && l.trim_start().starts_with("#let aliases") {
-                    replaced = true;
-                    if let Some(open) = l.find('(')
-                        && let Some(close) = l.rfind(')') {
-                            let items = &l[open + 1..close];
-                            let trimmed = items.trim();
-                            let comma = if trimmed.is_empty() {
-                                String::new()
-                            } else {
-                                format!("{},", trimmed.trim_end_matches(','))
-                            };
-                            return format!(
-                                "{}({}{alias_entry},){}",
-                                &l[..open],
-                                comma,
-                                &l[close + 1..]
-                            );
-                        }
-                    l.to_string()
-                } else {
-                    l.to_string()
+        // 已有 aliases 行：按括号配平定位完整语句（容忍多行书写），
+        // 提取既有条目后整体重写为紧凑单行，再把旧 slug 追加进元组。
+        let stmt_start = source.find("#let aliases").expect("前面已确认存在 aliases 行");
+        let bytes = source.as_bytes();
+        let mut i = stmt_start;
+        let mut depth = 0i32;
+        let mut stmt_end = source.len();
+        while i < bytes.len() {
+            match bytes[i] {
+                b'(' => depth += 1,
+                b')' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        stmt_end = i + 1;
+                        break;
+                    }
                 }
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
+                // 跳过字符串字面量：条目里的括号不得干扰配平
+                b'"' => {
+                    i += 1;
+                    while i < bytes.len() && bytes[i] != b'"' {
+                        if bytes[i] == b'\\' {
+                            i += 1;
+                        }
+                        i += 1;
+                    }
+                }
+                _ => {}
+            }
+            i += 1;
+        }
+        let compact: String = source[stmt_start..stmt_end]
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect();
+        let existing = compact
+            .trim_start_matches("#let aliases=(")
+            .trim_end_matches(')');
+        let comma = if existing.is_empty() {
+            String::new()
+        } else {
+            format!("{existing},")
+        };
+        let replacement = format!("#let aliases = ({comma}{alias_entry},)");
+        source.replace_range(stmt_start..stmt_end, &replacement);
     }
-
     std::fs::write(&old_path, source)?;
     std::fs::rename(&old_path, &new_path)?;
     println!("✅ posts/{old}.typ → posts/{new}.typ");

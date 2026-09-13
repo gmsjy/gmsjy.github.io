@@ -1,12 +1,12 @@
 # 「复制到公众号 / 知乎」方案设计文档
 
-> 状态：**阶段 1 已完成并提交**（2026-09-03，commit `fd4e18c`）；知乎按老板指示**延后**
+> 状态：**阶段 1 / 2 / 3 已完成**（阶段 1：2026-09-03 `fd4e18c`；阶段 2 知乎：2026-09-08 `9ba8eb8`；阶段 3：2026-09-04）；阶段 4 未开始
 > 决策：老板拍板三点 —— ① 公式用 SVG（use/symbol 展开保留矢量） ② 展开放**浏览器端 JS** ③ 保留 `publish --to markdown` 纯文件导出
 > 前置结论：**放弃「平台直接发布」（`publish --to wechat --push`），改为预览模式下的「复制按钮」+ 手动粘贴**
 >
 > **执行进度**（详见 §6 分阶段）：
 > - ✅ **阶段 1**：`serve` 注入「复制到公众号」浮动按钮 → JS use/symbol 展开 → 双格式剪贴板。已实现、resvg 端到端验证非空白、已提交 `fd4e18c`。
-> - ⏸️ **阶段 2（知乎按钮）**：**老板拍板缓一缓**。卡点：渲染 DOM 只含 SVG、不含 Typst 源码，浏览器 JS 无法还原 LaTeX（知乎 `$...$` 需 LaTeX 非 Typst 语法）。候选路径待定（转 SVG 图片 / 构建期注入源码转 LaTeX / HTML 富文本）。
+> - ✅ **阶段 2（知乎）**：已完成（2026-09-08，commit `9ba8eb8`）。落地为 **Rust 端构建期转换**：`src/latex.rs` Typst→LaTeX 转换器 + `ZhihuPublisher`（`publish --to zhihu`，公式转 LaTeX）+ `serve`「复制到知乎」按钮（复制 HTML 富文本）。绕开「渲染 DOM 只含 SVG、不含 Typst 源码」的浏览器端卡点，详见 §6。
 > - ✅ **阶段 3**（移除 `publish --to wechat --push` 触网链路）：**已完成**（2026-09-04）。`src/wechat_api.rs` 整体删除（草稿 API、token/媒体缓存、素材转传、`--push`、`typall.wechat.example.toml`）；`publish --to wechat` 保留为**纯本地富文本导出**（公式/插图栅格化 PNG data URI）。历史缓存 `.typall/wechat_token.json` / `wechat_media.json` 成为死文件，`typall clean` 会顺手删除。
 
 ---
@@ -19,7 +19,7 @@
 | 公式处理 | ✅ **SVG + use/symbol 展开**：把 `<defs>`+`<symbol id>`+`<use xlink:href>` 展开成纯 `<path>`，删光 id/defs。**展开放浏览器端 JS**（老板定），复制动作触发时实时处理 |
 | 按钮形态 | 浮动侧边栏按钮（复制到公众号 / 复制到知乎） |
 | 技术边界 | 预览模式（`serve`）注入按钮，发布模式（`build`）保持零 JS |
-| 知乎 | 当前代码零实现；复制纯文本 Markdown（复用 html_to_markdown） |
+| 知乎 | ✅ 已实现（2026-09-08）：`publish --to zhihu`（公式转 LaTeX）+ serve「复制到知乎」按钮（HTML 富文本） |
 | `publish --to markdown` | **保留**（纯文件导出、不触网），仅砍 `--to wechat --push` API 触网发布 |
 
 ---
@@ -166,7 +166,11 @@
 ## 6. 分阶段落地建议（浏览器 JS 决策下）
 
 - **阶段 1（最小闭环）** ✅ 已完成（commit `fd4e18c`）：`serve` 注入「复制到公众号」浮动按钮 → JS 抓取 `<article>` → use/symbol 展开 → 双格式剪贴板。端到端用 resvg 0.45 栅格化「展开后」的 5 个真实公式 SVG，全部 NON-BLANK（主公式 274×267，56.8% alpha>0），证明展开后纯 path 结构可被标准 SVG 渲染器正常绘制 → 微信删 id/defs 不再影响，且粘贴无字符上限。**待老板实测公众号粘贴效果**。
-- **阶段 2** ⏸️ 延后（老板拍板）。「复制到知乎」按钮。**已知卡点**：渲染出的 DOM 只含公式 SVG、**不含 Typst 源码**，浏览器端 JS 无法像 Rust `publish.rs` 那样用 `CompiledDoc.math[].source` 还原 LaTeX；而知乎 `$...$` 要求 LaTeX 语法（Typst ≠ LaTeX）。候选路径（择一，需老板定）：
+- **阶段 2** ✅ 已完成（2026-09-08，commit `9ba8eb8`）。「复制到知乎」按钮 + `publish --to zhihu`。原卡点：渲染出的 DOM 只含公式 SVG、**不含 Typst 源码**，浏览器端 JS 无法像 Rust `publish.rs` 那样用 `CompiledDoc.math[].source` 还原 LaTeX；而知乎 `$...$` 要求 LaTeX 语法（Typst ≠ LaTeX）。**最终落地绕开浏览器端转换**——在 Rust 端做构建期转换（原候选 B 的 Rust 版）+ 富文本复制（原候选 C）组合：
+  - `src/latex.rs`：Typst→LaTeX 转换器（分数/根号/上下标/希腊字母/极限求和积分等高频结构），配套单测；
+  - `publish --to zhihu`（`ZhihuPublisher`）：公式替换为 `$$ … $$` 独立段 / `<span class="ztext-math">$ … $</span>` 行内；配对保护——公式渲染物与源码数量不匹配时保守保留原始渲染物；产物到 `publish/zhihu/<slug>.html`，指纹记账幂等；
+  - serve「复制到知乎」按钮：直接复制当前页 `article` HTML 富文本（知乎编辑器较宽容，无需内联样式/图片栅格化）。
+  原候选路径（决策记录）：
   - A. 公式 SVG → `data:` 图片内嵌进 Markdown（`![](data:image/svg+xml...)`），不动 Rust、改动最小；
   - B. 改 `build.rs` 把每公式 Typst 源码注入 `data-*` 属性 → 浏览器端 Typst→LaTeX 转换器（复杂、易错、覆盖率低）；
   - C. 知乎也复制 HTML 富文本（与公众号同款 use/symbol 展开），需实测知乎兼容性。
