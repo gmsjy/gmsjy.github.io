@@ -56,6 +56,7 @@ typall build -C ~/blogs/physics        # 等价：参数放在子命令后
 | `typall new <post>` | 在 `posts/` 下生成新文章模板 |
 | `typall build` | 构建站点到 `public/`（`--strict` 死链检查、`--drafts` 含草稿、`--output` 自定义输出目录） |
 | `typall serve` | 开发服务器 + Live Reload（`--port` 端口、`--open` 开浏览器、`--host 0.0.0.0` 开放局域网并打印手机扫码二维码） |
+| `typall live [slug]` | 实时写作模式：盯住一篇文章，保存即单篇重编译并刷新浏览器（毫秒级；slug 省略取最近修改的一篇） |
 | `typall deploy` | 按配置部署（`--target` 临时覆盖、`--dry-run` 模拟） |
 | `typall publish --to markdown` | 将文章导出为 Markdown（单篇 → 平台，见「发布（publish）」） |
 | `typall publish --to zhihu` | 生成知乎可粘贴的富文本（公式转 LaTeX，见「发布（publish）」） |
@@ -324,6 +325,17 @@ front-matter 可显式指定文章的社交分享图（og:image 第一优先级�
 `typall serve` 打开文章页点「复制到知乎」按钮（直接复制当前页面正文）。
 
 ## 写作指南
+
+### 实时预览（写作模式）
+
+```bash
+typall live            # 盯住 posts/ 下最近修改的一篇（通常就是正在写的）
+typall live quantum    # 或显式指定 slug（posts/quantum）
+```
+
+启动后自动打开浏览器直达该文章页；每次保存**只重编译这一篇**（毫秒级）并自动刷新，
+不重建集合页 / Feed / 搜索索引——这正是它比 `typall serve` 快的原因。
+改动其他文件（主题、配置、别的文章）会自动回退到全量重建，行为与 `serve` 一致。
 
 ### 文章元数据
 

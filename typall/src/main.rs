@@ -68,6 +68,16 @@ enum Command {
         #[arg(long)]
         open: bool,
     },
+    /// 实时写作模式：盯住一篇文章，保存即单篇重编译并刷新浏览器（毫秒级）
+    Live {
+        /// 目标文章 slug（posts/quantum 或 quantum）；省略则取 posts/ 下最近修改的一篇
+        slug: Option<String>,
+        #[arg(long)]
+        port: Option<u16>,
+        /// 绑定地址：127.0.0.1 仅本机；0.0.0.0 开放局域网
+        #[arg(long)]
+        host: Option<String>,
+    },
     /// 按配置部署站点
     Deploy {
         #[arg(long)] target: Option<String>,
@@ -281,7 +291,12 @@ fn main() -> anyhow::Result<()> {
         },
         Command::Serve { port, open, host } => {
             let config = config::Config::load(&root)?;
-            serve::serve(&root, config, port.unwrap_or(8080), open, host.as_deref())
+            serve::serve(&root, config, port.unwrap_or(8080), open, host.as_deref(), None)
+        }
+        Command::Live { slug, port, host } => {
+            let config = config::Config::load(&root)?;
+            let focus = resolve_live_focus(&root, slug.as_deref())?;
+            serve::serve(&root, config, port.unwrap_or(8080), false, host.as_deref(), Some(focus))
         }
         Command::Deploy { target, dry_run } => {
             let config = config::Config::load(&root)?;
@@ -479,6 +494,35 @@ fn normalize_slug(slug: &str) -> String {
         .strip_prefix("posts/")
         .unwrap_or(slug.trim_matches('/'))
         .to_string()
+}
+
+/// 实时模式目标解析：显式 slug 校验后定位 posts/<name>.typ；
+/// 省略时取 posts/ 下最近修改的 .typ（写作时通常是正在写的那篇）。
+fn resolve_live_focus(root: &Path, slug: Option<&str>) -> anyhow::Result<PathBuf> {
+    match slug {
+        Some(s) => {
+            let name = normalize_slug(s);
+            validate_slug(&name)?;
+            let path = root.join("posts").join(format!("{name}.typ"));
+            if !path.is_file() {
+                anyhow::bail!("找不到文章 posts/{name}.typ（`typall list` 可查看全部 slug）");
+            }
+            Ok(path)
+        }
+        None => {
+            let mut best: Option<(std::time::SystemTime, PathBuf)> = None;
+            for f in content::scan_typ_files(&root.join("posts")) {
+                let mtime = std::fs::metadata(&f)
+                    .and_then(|m| m.modified())
+                    .unwrap_or(std::time::UNIX_EPOCH);
+                if best.as_ref().is_none_or(|(t, _)| mtime > *t) {
+                    best = Some((mtime, f));
+                }
+            }
+            best.map(|(_, p)| p)
+                .ok_or_else(|| anyhow::anyhow!("posts/ 下没有文章，先用 `typall new <名字>` 创建一篇"))
+        }
+    }
 }
 
 fn cmd_import(root: &Path, file: &str, slug: Option<&str>) -> anyhow::Result<()> {

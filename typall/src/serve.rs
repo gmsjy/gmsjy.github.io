@@ -279,7 +279,14 @@ struct ServeState {
     status: Arc<watch::Sender<BuildStatus>>,
 }
 
-pub fn serve(root: &Path, config: Config, port: u16, open: bool, host: Option<&str>) -> anyhow::Result<()> {
+pub fn serve(
+    root: &Path,
+    config: Config,
+    port: u16,
+    open: bool,
+    host: Option<&str>,
+    focus: Option<PathBuf>,
+) -> anyhow::Result<()> {
     let root = root.to_path_buf();
     // 首次构建：失败不再中止 serve——错误状态进 watch 通道，浏览器浮层展示，
     // 修复后任一文件保存触发重建并自动恢复。
@@ -294,9 +301,34 @@ pub fn serve(root: &Path, config: Config, port: u16, open: bool, host: Option<&s
     };
     let status = Arc::new(watch::Sender::new(initial));
 
-    // --open：延迟打开浏览器，等服务器 bind 完成
-    if open {
-        let url = format!("http://127.0.0.1:{port}");
+    // 实时模式状态：目标文章 + 单篇编译器 + 文章列表（导航上下文）。
+    // 初始化失败降级为常规 serve（编辑器修好文章后全量重建路径仍可用）。
+    let live = match &focus {
+        Some(path) => {
+            let focus_slug = crate::content::rel_path(&root, path)
+                .trim_end_matches(".typ")
+                .replace('\\', "/");
+            match build_live_state(&root, &config, path, &focus_slug) {
+                Ok(state) => {
+                    println!("✍️  实时模式：监听 {focus_slug}（保存即单篇重编译，毫秒级刷新）");
+                    Some(state)
+                }
+                Err(e) => {
+                    eprintln!("⚠️ 实时模式初始化失败，退回常规 serve：{e:#}");
+                    None
+                }
+            }
+        }
+        None => None,
+    };
+    let focus_slug = live.as_ref().map(|s| s.focus_slug.clone());
+
+    // --open 或实时模式：延迟打开浏览器，等服务器 bind 完成（实时模式直达文章页）
+    if open || focus.is_some() {
+        let url = match &focus_slug {
+            Some(slug) => format!("http://127.0.0.1:{port}/{slug}/"),
+            None => format!("http://127.0.0.1:{port}"),
+        };
         std::thread::spawn(move || {
             std::thread::sleep(Duration::from_millis(500));
             open_browser(&url);
@@ -309,7 +341,7 @@ pub fn serve(root: &Path, config: Config, port: u16, open: bool, host: Option<&s
         let config = config.clone();
         let status = status.clone();
         std::thread::spawn(move || {
-            if let Err(e) = watch_loop(&root, config, status) {
+            if let Err(e) = watch_loop(&root, config, status, live) {
                 eprintln!("文件监听出错: {e}");
             }
         });
@@ -567,7 +599,12 @@ fn mime_for(path: &Path) -> &'static str {
     }
 }
 
-fn watch_loop(root: &Path, config: Config, status: Arc<watch::Sender<BuildStatus>>) -> anyhow::Result<()> {
+fn watch_loop(
+    root: &Path,
+    config: Config,
+    status: Arc<watch::Sender<BuildStatus>>,
+    mut live: Option<LiveState>,
+) -> anyhow::Result<()> {
     let mut config = config;
     let (tx, rx) = std::sync::mpsc::channel::<notify::Result<notify::Event>>();
 
@@ -581,10 +618,11 @@ fn watch_loop(root: &Path, config: Config, status: Arc<watch::Sender<BuildStatus
         }
     }
 
-    // 去抖：记录最后一次事件时间，等事件流稳定 300ms 后再重建。
+    // 去抖：记录最后一次事件时间与涉及路径，等事件流稳定 300ms 后再重建。
     // 旧实现"距上次重建不足 300ms 就跳过"会导致编辑器连续保存时永不重建。
     let mut last_event = Instant::now();
     let mut pending = false;
+    let mut pending_paths: Vec<PathBuf> = Vec::new();
     loop {
         match rx.recv_timeout(Duration::from_millis(100)) {
             Ok(res) => {
@@ -599,15 +637,37 @@ fn watch_loop(root: &Path, config: Config, status: Arc<watch::Sender<BuildStatus
                 if should_rebuild(&event) {
                     last_event = Instant::now();
                     pending = true;
+                    pending_paths
+                        .extend(event.paths.iter().filter(|p| !is_temp_artifact(p)).cloned());
                 }
             }
             Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
                 if pending && last_event.elapsed() >= Duration::from_millis(300) {
                     pending = false;
+                    let paths = std::mem::take(&mut pending_paths);
                     // 每次重建前重读配置：watcher 只上报「文件变了」这一事实，
                     // typall.toml 的语义变更（如切换 [theme] name）必须重新加载
                     // 才会生效——否则热重建永远沿用 serve 启动时的快照。
                     config = reload_config(root, config);
+                    // 实时模式快速路径：本次变化只涉及目标文章 → 单篇重编译，
+                    // 跳过集合页/Feed/搜索索引等站点级产物（毫秒级出页面）。
+                    if let Some(state) = live.as_mut()
+                        && !paths.is_empty()
+                        && paths.iter().all(|p| is_same_file(p, &state.focus_canon))
+                    {
+                        println!("⚡ 检测到文章修改，单篇实时重编译…");
+                        match live_rebuild_article(root, &config, state) {
+                            Ok(()) => {
+                                push_status(&status, None);
+                                println!("✅ 实时预览已更新，已通知浏览器刷新");
+                            }
+                            Err(e) => {
+                                push_status(&status, Some(format!("{e:#}")));
+                                eprintln!("❌ 实时重编译失败:\n{e:#}");
+                            }
+                        }
+                        continue;
+                    }
                     println!("🔄 检测到变化，重新构建…");
                     match build::build(root, &config, true) {
                         Ok(_) => {
@@ -624,6 +684,90 @@ fn watch_loop(root: &Path, config: Config, status: Arc<watch::Sender<BuildStatus
             Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
         }
     }
+    Ok(())
+}
+
+/// 实时模式状态：目标文章、单篇编译器与文章列表（供上一篇/下一篇/专栏导航）。
+struct LiveState {
+    focus_slug: String,
+    focus_path: PathBuf,
+    /// 规范化后的目标路径：事件路径 canonicalize 后与之比较。
+    focus_canon: PathBuf,
+    compiler: crate::compile::LiveCompiler,
+    /// 日期倒序（与 build 同口径）；写作模式全量可见（含草稿/定时文章）。
+    posts: Vec<crate::ir::CompiledDoc>,
+}
+
+fn build_live_state(
+    root: &Path,
+    config: &Config,
+    focus_path: &Path,
+    focus_slug: &str,
+) -> anyhow::Result<LiveState> {
+    let compiler = crate::compile::LiveCompiler::new(root, config)?;
+    // 文章列表走编译缓存（全部命中，毫秒级），供导航上下文；失败降级空列表，
+    // 目标文章保存后仍能单篇重编译（此时 prev/next 暂缺）。
+    let mut posts = match crate::compile::compile_documents(root, config) {
+        Ok(docs) => docs.posts,
+        Err(e) => {
+            eprintln!("⚠️ 文章列表初始化失败（导航暂缺）：{e:#}");
+            Vec::new()
+        }
+    };
+    posts.sort_by(|a, b| b.meta.date.cmp(&a.meta.date));
+    let focus_canon = std::fs::canonicalize(focus_path).unwrap_or_else(|_| focus_path.to_path_buf());
+    Ok(LiveState {
+        focus_slug: focus_slug.to_string(),
+        focus_path: focus_path.to_path_buf(),
+        focus_canon,
+        compiler,
+        posts,
+    })
+}
+
+/// 事件路径是否即目标文章（canonicalize 比较，失败退回字面相等）。
+fn is_same_file(a: &Path, canon_b: &Path) -> bool {
+    match std::fs::canonicalize(a) {
+        Ok(canon) => canon == canon_b,
+        Err(_) => a == canon_b,
+    }
+}
+
+/// 实时快速路径：只重编译目标文章并重渲染其页面。集合页 / Feed / 搜索索引 /
+/// 分享卡等站点级产物不在快速路径内，由下次全量重建统一刷新。
+fn live_rebuild_article(root: &Path, config: &Config, state: &mut LiveState) -> anyhow::Result<()> {
+    let t0 = Instant::now();
+    let doc = state.compiler.compile(root, &state.focus_path, config)?;
+    let slug = doc.slug.clone();
+    match state.posts.iter().position(|p| p.slug == slug) {
+        Some(i) => state.posts[i] = doc,
+        None => state.posts.push(doc),
+    }
+    state.posts.sort_by(|a, b| b.meta.date.cmp(&a.meta.date));
+    let i = state.posts.iter().position(|p| p.slug == slug).expect("上方刚插入");
+    let theme = crate::theme::Theme::load(root, config)?;
+    let nav = crate::site::nav_links(&state.posts);
+    let series_navs = crate::site::series_nav_index(&state.posts)?;
+    let prev = state.posts.get(i + 1).map(|p| (p.slug.clone(), crate::site::post_title(p)));
+    let next = if i > 0 {
+        state.posts.get(i - 1).map(|p| (p.slug.clone(), crate::site::post_title(p)))
+    } else {
+        None
+    };
+    let prev_ref = prev.as_ref().map(|(s, t)| (s.as_str(), t.as_str()));
+    let next_ref = next.as_ref().map(|(s, t)| (s.as_str(), t.as_str()));
+    let html = crate::site::render_article(
+        &theme,
+        config,
+        &state.posts[i],
+        &nav,
+        prev_ref,
+        next_ref,
+        series_navs[i].as_ref(),
+    )?;
+    let mut writer = crate::writer::SiteWriter::new(config.output_dir(root));
+    writer.write_str(&format!("{slug}/index.html"), &html)?;
+    println!("   耗时 {}ms", t0.elapsed().as_millis());
     Ok(())
 }
 

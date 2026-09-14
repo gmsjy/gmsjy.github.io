@@ -22,6 +22,49 @@ use crate::cache::content_hash;
 /// 旧缓存继续命中，站点输出陈旧 HTML 且无任何提示。
 const PIPELINE_VERSION: u32 = 1;
 
+/// 编译缓存上下文串：preamble + 影响产物的后处理参数 + 管线版本。
+/// `compile_documents` 与实时模式（[`LiveCompiler`]）共用，保证缓存键一致。
+fn compile_context(config: &Config, preamble: &str) -> String {
+    format!(
+        "{preamble}[equation-prefix:{}][pipeline:{PIPELINE_VERSION}:{}]",
+        config.build.math.equation_prefix,
+        env!("CARGO_PKG_VERSION")
+    )
+}
+
+/// 实时模式（`typall live`）的单篇编译器：`SharedAssets`（字体等）与编译
+/// 缓存跨多次重编译存活，单篇文章保存后毫秒级重新出 HTML。
+pub(crate) struct LiveCompiler {
+    shared: Arc<SharedAssets>,
+    cache: CompileCache,
+    preamble: String,
+}
+
+impl LiveCompiler {
+    pub(crate) fn new(root: &Path, config: &Config) -> anyhow::Result<Self> {
+        let shared = Arc::new(SharedAssets::load(root)?);
+        let preamble = math_preamble(config, root);
+        let context = compile_context(config, &preamble);
+        Ok(Self {
+            shared,
+            cache: CompileCache::new(root, &context),
+            preamble,
+        })
+    }
+
+    pub(crate) fn compile(&self, root: &Path, path: &Path, config: &Config) -> anyhow::Result<CompiledDoc> {
+        compile_doc(
+            root,
+            path,
+            self.shared.clone(),
+            &self.preamble,
+            &config.build.math.renderer,
+            config,
+            Some(&self.cache),
+        )
+    }
+}
+
 /// 扫描 + 并行编译全部文章与独立页面（`build` 与 `publish` 共用的编译入口）。
 pub(crate) struct CompiledDocuments {
     pub posts: Vec<CompiledDoc>,
@@ -43,11 +86,7 @@ pub(crate) fn compile_documents(
 
     let preamble = math_preamble(config, root);
     // 编号前缀由 HTML 后处理注入（不在 preamble 内），必须纳入缓存上下文。
-    let context = format!(
-        "{preamble}[equation-prefix:{}][pipeline:{PIPELINE_VERSION}:{}]",
-        config.build.math.equation_prefix,
-        env!("CARGO_PKG_VERSION")
-    );
+    let context = compile_context(config, &preamble);
     let cache = CompileCache::new(root, &context);
     let compile_one = |path: &PathBuf| {
         compile_doc(root, path, shared.clone(), &preamble, &config.build.math.renderer, config, Some(&cache))
