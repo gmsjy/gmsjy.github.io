@@ -27,7 +27,6 @@ pub(crate) struct SearchEntry {
     text: String,
 }
 
-/// 编译缓存的单条记录（序列化到 `.typall/cache/`）。
 /// 页面级 SEO 信息（canonical / og:type / 页面描述）。
 pub(crate) struct SeoInfo<'a> {
     /// 站点相对路径（如 `/`、`/posts/foo/`），用于 canonical / og:url。
@@ -181,7 +180,10 @@ fn json_escape(s: &str) -> String {
 ///
 /// `meta refresh` 即时跳转 + canonical 指向新地址（对搜索引擎声明正主），
 /// noscript 场景保留可点链接。目标为站内绝对路径（如 `/posts/new-slug/`）。
+/// target 按 HTML 属性转义：slug/别名理论上可含 `"`、`&` 等字符，
+/// 未转义会破坏属性边界（属性注入）。
 pub(crate) fn redirect_page(target: &str) -> String {
+    let target = theme::escape(target);
     format!(
         r#"<!DOCTYPE html>
 <html lang="zh-CN">
@@ -1283,5 +1285,24 @@ pub(crate) fn remove_empty_dirs(dir: &Path) -> anyhow::Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn redirect_page_escapes_target_into_attributes() {
+        // 回归：target 此前未转义，含 `"` 的 slug 会突破 href 属性边界。
+        let page = redirect_page(r#"/posts/a"b&c/"#);
+        assert!(page.contains(r#"url=/posts/a&quot;b&amp;c/""#), "meta refresh 目标应转义: {page}");
+        assert!(page.contains(r#"href="/posts/a&quot;b&amp;c/""#));
+        // 不存在未转义的原始引号注入点
+        assert!(!page.contains(r#"a"b"#));
+        // 常规 target 原样可用
+        let plain = redirect_page("/posts/new-slug/");
+        assert!(plain.contains(r#"url=/posts/new-slug/""#));
+        assert!(plain.contains(r#"<a href="/posts/new-slug/">"#));
+    }
 }
 

@@ -214,7 +214,15 @@ impl TypallWorld {
 
     /// 本次编译 import 的依赖文件（磁盘绝对路径），去重排序后返回。
     pub fn deps(&self) -> Vec<PathBuf> {
-        let mut v: Vec<PathBuf> = self.deps.read().unwrap().iter().cloned().collect();
+        // 锁中毒恢复：某次编译 panic 不应让后续所有编译连环 panic
+        // （RwLock 中毒后数据本身仍一致，直接取回内部值继续用）。
+        let mut v: Vec<PathBuf> = self
+            .deps
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .cloned()
+            .collect();
         v.sort();
         v
     }
@@ -234,13 +242,21 @@ impl World for TypallWorld {
     }
 
     fn source(&self, id: FileId) -> FileResult<Source> {
-        if let Some(src) = self.sources.read().unwrap().get(&id) {
+        if let Some(src) = self
+            .sources
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get(&id)
+        {
             return Ok(src.clone());
         }
         let path = self.disk_path(id)?;
         // 主文件之外的 source 请求即 import 依赖，记录其磁盘路径供增量失效判断。
         if id != self.main {
-            self.deps.write().unwrap().insert(path.clone());
+            self.deps
+                .write()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .insert(path.clone());
         }
         let text = std::fs::read_to_string(&path).map_err(|e| FileError::from_io(e, &path))?;
         // 主文件注入 preamble（如公式编号设置）
@@ -250,7 +266,10 @@ impl World for TypallWorld {
             text
         };
         let source = Source::new(id, full);
-        self.sources.write().unwrap().insert(id, source.clone());
+        self.sources
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .insert(id, source.clone());
         Ok(source)
     }
 
@@ -258,7 +277,10 @@ impl World for TypallWorld {
         let path = self.disk_path(id)?;
         // 二进制资源（.wasm 插件、图片等）同样属于依赖，记录磁盘路径供增量失效
         // 判断——否则 cetz 内核或图片更新后，编译缓存会命中旧产物却无任何提示。
-        self.deps.write().unwrap().insert(path.clone());
+        self.deps
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .insert(path.clone());
         let data = std::fs::read(&path).map_err(|e| FileError::from_io(e, &path))?;
         Ok(Bytes::new(data))
     }

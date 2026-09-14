@@ -202,6 +202,11 @@ const SCALE: f32 = 2.0;
 /// 公众号正文图片显示宽度上限（px）。
 const WECHAT_MAX_WIDTH: f32 = 578.0;
 
+/// SVG 位图像素上限：宽高来自作者可控的 SVG `width`/`height`，
+/// 病态尺寸（如 1e6×1e6）会直接按 w×h×4 字节分配位图导致 OOM。
+/// 超限按报错处理（栅格化无意义），不做有损缩放。
+const SVG_MAX_PIXELS: u64 = 16_000_000;
+
 /// 公众号显示尺寸：超宽时宽高等比缩小。
 ///
 /// 只 clamp 宽不缩高会把超宽公式/插图压扁（`max-width:100%` 只兜住极端，
@@ -223,6 +228,12 @@ fn svg_to_png(svg: &str) -> anyhow::Result<(String, f32, f32)> {
     let size = tree.size();
     let w = ((size.width() * SCALE).ceil() as u32).max(1);
     let h = ((size.height() * SCALE).ceil() as u32).max(1);
+    // 位图内存 = w×h×4 字节，尺寸来自作者可控的 SVG 标签，必须设上限防 OOM
+    if u64::from(w) * u64::from(h) > SVG_MAX_PIXELS {
+        anyhow::bail!(
+            "SVG 尺寸过大（{w}×{h} 像素，上限 {SVG_MAX_PIXELS}），拒绝栅格化：请检查 SVG 的 width/height"
+        );
+    }
     let mut pixmap = resvg::tiny_skia::Pixmap::new(w, h)
         .ok_or_else(|| anyhow::anyhow!("位图分配失败 {w}x{h}"))?;
     resvg::render(

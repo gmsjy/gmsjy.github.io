@@ -824,6 +824,10 @@ fn cmd_ci(root: &Path, target: &str) -> anyhow::Result<()> {
     }
 }
 
+/// 嵌入的 `preview.typ`（fig / eq-numbering 双模式兼容层），`cmd_init` 脚手架
+/// 与 `cmd_new` 模板存在性判断共用。路径相对本文件：`typall/assets/preview.typ`。
+const EMBEDDED_PREVIEW_TYP: &str = include_str!("../assets/preview.typ");
+
 fn cmd_init(name: Option<&str>) -> anyhow::Result<()> {
     let dir = match name {
         Some(n) => PathBuf::from(n),
@@ -832,6 +836,10 @@ fn cmd_init(name: Option<&str>) -> anyhow::Result<()> {
     for sub in ["posts", "pages", "assets/images", "assets/fonts", "themes"] {
         std::fs::create_dir_all(dir.join(sub))?;
     }
+    // preview.typ 必须随项目脚手架落地：`typall new` 的模板 import 它
+    // （fig / eq-numbering 双模式兼容层），缺失会让新项目的每篇文章编译失败。
+    // 内容用 include_str! 嵌入本仓库的 assets/preview.typ，单一事实源。
+    std::fs::write(dir.join("assets").join("preview.typ"), EMBEDDED_PREVIEW_TYP)?;
 
     let config_toml = r##"[site]
 title = "我的博客"
@@ -900,16 +908,25 @@ fn cmd_new(root: &Path, post: &str) -> anyhow::Result<()> {
     std::fs::create_dir_all(&posts)?;
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let filename = format!("{today}-{name}.typ");
+    // 模板依赖 assets/preview.typ（fig / eq-numbering 兼容层）。init 出的新项目
+    // 一定有；旧版脚手架的项目可能没有——缺失时降级为无 import 的最简模板，
+    // 保证 `init → new → build` 全链路永不因这一行 import 断掉。
+    let has_preview = root.join("assets").join("preview.typ").is_file();
+    let imports = if has_preview {
+        r#"#import "../assets/preview.typ": fig, eq-numbering
+#show math.equation.where(block: true): set math.equation(numbering: eq-numbering)
+#show math.equation.where(block: false): set math.equation(numbering: none)
+"#
+    } else {
+        ""
+    };
     let content = format!(
         r#"#let title = "{name}"
 #let date = "{today}"
 #let tags = ()
 #let draft = false
 
-#import "../assets/preview.typ": fig, eq-numbering
-#show math.equation.where(block: true): set math.equation(numbering: eq-numbering)
-#show math.equation.where(block: false): set math.equation(numbering: none)
-
+{imports}
 = {name}
 "#
     );
@@ -990,5 +1007,45 @@ mod tests {
         assert!(text.contains("typall build"));
         // 二次生成拒绝覆盖
         assert!(cmd_ci(tmp.path(), "github").is_err());
+    }
+
+    // ===== 回归：`typall new` 模板依赖 assets/preview.typ =====
+
+    #[test]
+    fn init_scaffolds_preview_typ_and_new_imports_it() {
+        // 回归：init 只建 assets/ 子目录、不落 preview.typ，而 new 模板
+        // 写死 import 它——新用户 init → new → build 必然编译失败。
+        let tmp = tempfile::tempdir().unwrap();
+        cmd_init(Some(tmp.path().join("blog").to_str().unwrap())).unwrap();
+        let root = tmp.path().join("blog");
+        let preview = root.join("assets").join("preview.typ");
+        assert!(preview.is_file(), "init 应脚手架 assets/preview.typ");
+        let embedded = std::fs::read_to_string(preview).unwrap();
+        assert!(embedded.contains("eq-numbering"));
+        assert!(embedded.contains("html.frame"), "应与本仓库的 preview.typ 同源");
+
+        cmd_new(&root, "hello-math").unwrap();
+        let created = std::fs::read_to_string(root.join("posts").join(format!(
+            "{}-hello-math.typ",
+            chrono::Local::now().format("%Y-%m-%d")
+        )))
+        .unwrap();
+        assert!(created.contains(r#"#import "../assets/preview.typ""#));
+    }
+
+    #[test]
+    fn new_degrades_gracefully_without_preview_typ() {
+        // 旧版脚手架的项目（无 preview.typ）：模板降级为无 import，
+        // 不产出引用缺失文件的死链 import。
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(tmp.path().join("posts")).unwrap();
+        cmd_new(tmp.path(), "plain").unwrap();
+        let created = std::fs::read_to_string(tmp.path().join("posts").join(format!(
+            "{}-plain.typ",
+            chrono::Local::now().format("%Y-%m-%d")
+        )))
+        .unwrap();
+        assert!(!created.contains("preview.typ"), "无 preview.typ 时模板不应 import 它");
+        assert!(created.contains(r#"#let title = "plain""#));
     }
 }

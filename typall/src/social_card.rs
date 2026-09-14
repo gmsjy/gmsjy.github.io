@@ -58,14 +58,26 @@ fn wrap_title(title: &str, max_units_per_line: usize, max_lines: usize) -> Vec<S
     lines
 }
 
+/// 加载系统字体库（分享卡栅格化专用）。
+///
+/// `load_system_fonts` 要扫描全部系统字体（秒级），必须整个构建只做一次——
+/// 之前每张卡都重新加载，42 张卡 ≈ 30s，是首建最大的单项开销。
+pub(crate) fn load_fontdb() -> std::sync::Arc<resvg::usvg::fontdb::Database> {
+    let mut fontdb = resvg::usvg::fontdb::Database::new();
+    fontdb.load_system_fonts();
+    std::sync::Arc::new(fontdb)
+}
+
 /// 渲染分享卡 PNG 字节。
 ///
 /// `accent`：主题强调色（如 `#0b6fc0`），用于左侧色条与站点名。
+/// `fontdb`：由 [`load_fontdb`] 构建的全构建共享字体库（调用方加载一次复用）。
 pub(crate) fn render_card_png(
     title: &str,
     site_title: &str,
     date: &str,
     accent: &str,
+    fontdb: &std::sync::Arc<resvg::usvg::fontdb::Database>,
 ) -> anyhow::Result<Vec<u8>> {
     let lines = wrap_title(title, 26, 3);
     let font = "font-family=\"PingFang SC, Microsoft YaHei, Noto Sans CJK SC, Source Han Sans SC, sans-serif\"";
@@ -102,11 +114,9 @@ pub(crate) fn render_card_png(
     );
 
     // usvg 默认 fontdb 为空库，`<text>` 无法匹配任何字体会渲染成空白——
-    // 必须加载系统字体，并把默认字体族指到中文字体（标题含 CJK）。
-    let mut fontdb = resvg::usvg::fontdb::Database::new();
-    fontdb.load_system_fonts();
+    // 必须传入已加载系统字体的库，并把默认字体族指到中文字体（标题含 CJK）。
     let options = resvg::usvg::Options {
-        fontdb: std::sync::Arc::new(fontdb),
+        fontdb: std::sync::Arc::clone(fontdb),
         font_family: "Microsoft YaHei".into(),
         ..Default::default()
     };
@@ -189,7 +199,8 @@ mod tests {
 
     #[test]
     fn card_png_has_magic_and_dimensions() {
-        let png = render_card_png("测试标题", "站点", "2026-09-05", "#0b6fc0").unwrap();
+        let fontdb = load_fontdb();
+        let png = render_card_png("测试标题", "站点", "2026-09-05", "#0b6fc0", &fontdb).unwrap();
         assert_eq!(&png[..4], &[0x89, b'P', b'N', b'G']);
         // 2x：应为 2400×1260
         let w = u32::from_be_bytes([png[16], png[17], png[18], png[19]]);

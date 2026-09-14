@@ -200,6 +200,20 @@ pub fn auto_excerpt(body_html: &str, max_len: usize) -> String {
     }
 }
 
+/// 别名（`#let aliases`）安全性校验：别名会直接拼进输出路径
+/// （`<alias>/index.html`），必须拒绝路径穿越与越界写文件。
+/// 口径与 slug 校验一致：拒空串、`..`、`.`、绝对路径/盘符前缀、引号与控制字符；
+/// 允许多级别名（每级都必须是普通名字，如 `old/posts/foo`）。
+pub(crate) fn is_safe_alias(alias: &str) -> bool {
+    !alias.is_empty()
+        && Path::new(alias)
+            .components()
+            .all(|c| matches!(c, std::path::Component::Normal(_)))
+        && !alias
+            .chars()
+            .any(|c| matches!(c, '"' | '\'' | '<' | '>' | '|' | '?' | '*') || c.is_control())
+}
+
 /// 扫描目录下所有 `.typ` 文件（返回绝对路径）。
 pub fn scan_typ_files(dir: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
@@ -243,6 +257,29 @@ mod tests {
 "#;
         let meta = DocumentMeta::from_map(&extract_meta(src));
         assert_eq!(meta.aliases, vec!["old-path", "second-old"]);
+    }
+
+    #[test]
+    fn is_safe_alias_blocks_traversal_and_injection() {
+        // 回归：别名此前未校验，`../evil` 会把跳转页写到 public/ 之外。
+        assert!(is_safe_alias("old-path"));
+        assert!(is_safe_alias("2026/old-nested")); // 多级允许：每级都是普通名字
+        // 路径穿越
+        assert!(!is_safe_alias("../evil"));
+        assert!(!is_safe_alias("a/../b"));
+        assert!(!is_safe_alias(".."));
+        // 绝对路径 / 当前目录分量
+        assert!(!is_safe_alias("/etc"));
+        assert!(!is_safe_alias("./x"));
+        // 盘符（Windows 上 join 会整体替换基路径）
+        assert!(!is_safe_alias("C:/x"));
+        // 属性注入字符与控制字符
+        assert!(!is_safe_alias("a\"b"));
+        assert!(!is_safe_alias("a'b"));
+        assert!(!is_safe_alias("a<b"));
+        assert!(!is_safe_alias("a\nb"));
+        // 空串
+        assert!(!is_safe_alias(""));
     }
 
     #[test]

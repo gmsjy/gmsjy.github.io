@@ -36,6 +36,13 @@ pub fn build(root: &Path, config: &Config, cli_include_drafts: bool) -> anyhow::
     let mut pages = compiled.pages;
     let t_compile = t_start.elapsed();
 
+    // 非 ISO 日期警告：自由文本日期（如「今年夏天」）参与字符串比较的定时发布
+    // 判断与归档分组都不可靠。必须在 filter_unpublished 之前检查——被误判为
+    // 「未来日期」的文章恰恰会在这里被静默排除，过滤后再查就查不到了。
+    for w in date_warnings(posts.iter().chain(pages.iter())) {
+        eprintln!("⚠️ {w}");
+    }
+
     // 过滤草稿/未来日期（pages 同样受 draft 约束，否则草稿页会泄入站点与 sitemap）
     filter_unpublished(&mut posts, include_drafts);
     filter_unpublished(&mut pages, include_drafts);
@@ -56,8 +63,9 @@ pub fn build(root: &Path, config: &Config, cli_include_drafts: bool) -> anyhow::
 
     // 分享卡（og:image）：无正文首图的文章生成 1200×630 PNG，
     // 有首图的直接引用首图，不重复产卡。
-    // 输入指纹缓存：resvg 每次栅格化都要加载字体（42 卡 ≈ 30s，增量构建的
-    // 最大开销），标题/站点名/日期/配色未变时直接复用既有 PNG 跳过栅格化。
+    // 输入指纹缓存：标题/站点名/日期/配色未变时直接复用既有 PNG 跳过栅格化。
+    // 字体库整个构建只加载一次（每张卡重扫系统字体曾是 42 卡 ≈ 30s 的主因），
+    // 且只在确实需要产卡时才加载。
     if !config.site.url.trim().is_empty() {
         let accent = theme_accent(config);
         let card_map_path = root.join(".typall/cards.json");
@@ -68,6 +76,7 @@ pub fn build(root: &Path, config: &Config, cli_include_drafts: bool) -> anyhow::
         // 卡片供 posts 与 pages 共用：两者都走 render_article，og_image_for
         // 对无首图文档一律回退分享卡——只给 posts 生成会让页面的 og:image 404。
         let card_docs: Vec<&CompiledDoc> = posts.iter().chain(pages.iter()).collect();
+        let mut fontdb: Option<std::sync::Arc<resvg::usvg::fontdb::Database>> = None;
         for doc in &card_docs {
             if crate::social_card::first_image_path(&doc.body_html).is_some() {
                 continue;
@@ -88,11 +97,13 @@ pub fn build(root: &Path, config: &Config, cli_include_drafts: bool) -> anyhow::
                 writer.mark(&og_card_filename(&doc.slug));
                 continue;
             }
+            let db = fontdb.get_or_insert_with(crate::social_card::load_fontdb);
             let png = crate::social_card::render_card_png(
                 &post_title(doc),
                 &config.site.title,
                 &date,
                 &accent,
+                db,
             )?;
             writer.write(&og_card_filename(&doc.slug), &png)?;
             card_map.insert(doc.slug.clone(), key);
@@ -156,6 +167,15 @@ pub fn build(root: &Path, config: &Config, cli_include_drafts: bool) -> anyhow::
     // 走 SiteWriter 登记 → 别名移除后随孤儿清理消失。
     for post in &posts {
         for alias in &post.meta.aliases {
+            // 别名直接拼进输出路径，穿越型/非法别名会把文件写到 public/ 之外：
+            // 一律跳过并告警，不中断整个构建（其余合法别名照常生成）。
+            if !content::is_safe_alias(alias) {
+                eprintln!(
+                    "⚠️ 文章 {} 的别名 `{alias}` 含路径穿越或非法字符，已跳过（不生成跳转页）",
+                    post.slug
+                );
+                continue;
+            }
             let target = format!("/{}/", post.slug);
             writer.write_str(&format!("{alias}/index.html"), &redirect_page(&target))?;
         }
@@ -241,6 +261,24 @@ pub fn build(root: &Path, config: &Config, cli_include_drafts: bool) -> anyhow::
         t_start.elapsed().as_secs_f64()
     );
     Ok(())
+}
+
+/// 非 ISO 日期检查：返回需要告警的（slug, 日期）清单。
+///
+/// `#let date = "今年夏天"` 这类自由文本会被原样保留并参与字符串比较——
+/// 大多数字典序大于今天，文章被当成「未来日期」静默排除且归档分组错乱。
+fn date_warnings<'a>(docs: impl Iterator<Item = &'a CompiledDoc>) -> Vec<String> {
+    docs.filter_map(|p| {
+        let d = p.meta.date.as_deref()?;
+        if d.is_empty() || chrono::NaiveDate::parse_from_str(d, "%Y-%m-%d").is_ok() {
+            return None;
+        }
+        Some(format!(
+            "文章 {} 的日期 `{d}` 不是 YYYY-MM-DD：无法判断定时发布/归档分组（自由文本日期会被字符串比较误判为未来日期而静默不发布）",
+            p.slug
+        ))
+    })
+    .collect()
 }
 
 /// 编译单个 `.typ` 文件，返回正文 HTML + MathML 样式。
@@ -707,5 +745,58 @@ mod tests {
 
         // 非专栏文章：整体为空串
         assert_eq!(render_series_nav(&Theme::builtin(), None).unwrap(), "");
+    }
+
+    #[test]
+    fn malicious_alias_is_skipped_and_safe_alias_redirects() {
+        // 回归：aliases 此前直接拼进输出路径——`../evil` 会把跳转页写到
+        // public/ 之外（越界写文件）。非法别名应跳过，合法别名照常生成。
+        let root = std::env::temp_dir().join(format!("typall-alias-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("posts")).unwrap();
+        std::fs::write(root.join("typall.toml"), "[site]\ntitle = \"t\"\n").unwrap();
+        std::fs::write(
+            root.join("posts").join("aliased.typ"),
+            "#let title = \"t\"\n#let date = \"2026-01-01\"\n#let aliases = (\"../evil\", \"old-alias\", \"a\\\"q\")\n\n正文。\n",
+        )
+        .unwrap();
+
+        let config = Config::load(&root).unwrap();
+        build(&root, &config, false).unwrap();
+
+        // 穿越别名：不得在 public/ 之外落任何文件
+        assert!(!root.join("evil").exists(), "穿越别名不得写出 public/");
+        assert!(!root.join("evil").join("index.html").exists());
+        // 合法别名正常生成跳转页
+        let redirect = root.join("public").join("old-alias").join("index.html");
+        assert!(redirect.is_file(), "合法别名应生成跳转页");
+        let html = std::fs::read_to_string(&redirect).unwrap();
+        assert!(html.contains(r#"url=/posts/aliased/""#));
+        // 含引号的别名本身被 is_safe_alias 拒绝（文件名非法字符）
+        assert!(!root.join("public").join("a\"q").exists());
+        assert!(!root.join("public").join("a&quot;q").exists());
+
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    #[test]
+    fn non_iso_date_is_flagged_in_warnings() {
+        let docs = [
+            doc_with("p/iso", "2026-01-01", None, None),
+            CompiledDoc {
+                slug: "p/free".into(),
+                meta: DocumentMeta {
+                    date: Some("今年夏天".into()),
+                    ..Default::default()
+                },
+                body_html: String::new(),
+                math_style: String::new(),
+                math: Vec::new(),
+            },
+        ];
+        let warnings = date_warnings(docs.iter());
+        assert_eq!(warnings.len(), 1);
+        assert!(warnings[0].contains("p/free"));
+        assert!(warnings[0].contains("今年夏天"));
     }
 }

@@ -29,6 +29,13 @@ pub struct Theme {
     ///
     /// 内置默认主题为空表，全部走 `DEFAULT_*` 内置常量回退。
     partials: HashMap<String, String>,
+    /// 已编译模板缓存：模板源串 → tera 实例（`autoescape=false`）。
+    ///
+    /// `render_partial` 被逐文章/逐列表项/逐标签调用，`Tera::one_off` 每次都
+    /// 重新解析编译同一份模板——T 个标签 × P 篇文章即 O(T×P) 次重复解析。
+    /// 模板源在一次构建内固定，按源串缓存编译产物后每个模板只编译一次。
+    /// rayon 并行渲染跨线程共享，用 Mutex 保护（首次编译后仅查表）。
+    tera_cache: std::sync::Mutex<HashMap<String, tera::Tera>>,
 }
 
 impl Theme {
@@ -79,6 +86,7 @@ impl Theme {
             template,
             static_dir,
             partials,
+            tera_cache: std::sync::Mutex::new(HashMap::new()),
         })
     }
 
@@ -90,6 +98,7 @@ impl Theme {
             template: DEFAULT_TEMPLATE.to_string(),
             static_dir: None,
             partials: HashMap::new(),
+            tera_cache: std::sync::Mutex::new(HashMap::new()),
         }
     }
 
@@ -145,7 +154,28 @@ impl Theme {
         for (k, v) in html {
             context.insert(*k, v);
         }
-        tera::Tera::one_off(tpl, &context, false).map_err(Into::into)
+        self.render_tpl(tpl, &context)
+    }
+
+    /// 按模板源串渲染，命中缓存直接复用已编译的 tera 实例。
+    ///
+    /// 锁中毒（某次编译 panic 后）用 `into_inner` 恢复：模板编译失败只影响
+    /// 本次渲染，不该让后续所有渲染连环 panic。
+    fn render_tpl(&self, tpl: &str, context: &tera::Context) -> anyhow::Result<String> {
+        let mut cache = self
+            .tera_cache
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let tera = match cache.get(tpl) {
+            Some(t) => t,
+            None => {
+                let mut t = tera::Tera::default();
+                t.add_raw_template("__tpl__", tpl)?;
+                cache.insert(tpl.to_string(), t);
+                cache.get(tpl).expect("刚插入")
+            }
+        };
+        tera.render("__tpl__", context).map_err(Into::into)
     }
 }
 
@@ -432,7 +462,7 @@ pub fn render_page(theme: &Theme, ctx: &PageContext<'_>) -> anyhow::Result<Strin
     };
 
     let context = tera::Context::from_serialize(&data)?;
-    tera::Tera::one_off(&theme.template, &context, false).map_err(Into::into)
+    theme.render_tpl(&theme.template, &context)
 }
 
 /// 文章列表条目。
@@ -497,7 +527,7 @@ pub fn render_post_list_partial(
     let mut context = tera::Context::new();
     context.insert("posts", posts);
     context.insert("count", &posts.len().to_string());
-    tera::Tera::one_off(tpl, &context, false).map_err(Into::into)
+    theme.render_tpl(tpl, &context)
 }
 
 /// 渲染文章元信息 partial（`partials/meta.html`，P2 后新增）。
@@ -712,6 +742,7 @@ mod tests {
             template: template.into(),
             static_dir: None,
             partials: HashMap::new(),
+            tera_cache: std::sync::Mutex::new(HashMap::new()),
         }
     }
 
@@ -906,6 +937,20 @@ mod tests {
         let theme = Theme::builtin();
         let out = theme.render_partial("post_item", "<li>{{title}}</li>", &[("title", "X")], &[]).unwrap();
         assert_eq!(out, "<li>X</li>");
+    }
+
+    #[test]
+    fn render_partial_caches_compiled_templates() {
+        // 回归：render_partial 曾每次 Tera::one_off 重新解析编译同一份模板，
+        // 逐文章/逐标签调用时是 O(T×P) 次重复解析。缓存后同一源串只编译一次，
+        // 且不同变量值渲染结果互不串扰。
+        let theme = Theme::builtin();
+        let a = theme.render_partial("post_item", "<li>{{title}}</li>", &[("title", "A")], &[]).unwrap();
+        let b = theme.render_partial("post_item", "<li>{{title}}</li>", &[("title", "B")], &[]).unwrap();
+        assert_eq!(a, "<li>A</li>");
+        assert_eq!(b, "<li>B</li>");
+        let cache = theme.tera_cache.lock().unwrap();
+        assert_eq!(cache.len(), 1, "同一模板源应只编译一次");
     }
 
     #[test]

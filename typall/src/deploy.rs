@@ -4,6 +4,7 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Arc;
 
 use crate::build;
 use crate::config::Config;
@@ -183,9 +184,13 @@ pub(crate) fn next_wait(
 /// 每次触发：重读配置（策略/仓库/计划的修改免重启）→ 全量构建（增量缓存，
 /// 未变文章直接命中；定时发布的未来日期文章由这一步到点带上线）→ 按
 /// `[deploy] strategy` 部署一次。构建或部署失败只告警不退出，等下次触发。
+///
+/// `build_lock`：与 serve 的文件监听重建/live 快速路径互斥（构建产物与
+/// 孤儿清理不允许并发写），构建+部署全程持锁。
 pub(crate) fn spawn_scheduled_deploy(
     root: PathBuf,
     config: Config,
+    build_lock: Arc<std::sync::Mutex<()>>,
 ) -> Option<std::thread::JoinHandle<()>> {
     let triggers = parse_schedule(&config.deploy.schedule).ok()?;
     if triggers.is_empty() {
@@ -202,6 +207,7 @@ pub(crate) fn spawn_scheduled_deploy(
                 continue;
             }
         };
+        let _guard = build_lock.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         if let Err(e) = build::build(&root, &config, false) {
             eprintln!("⚠️ 定时部署的构建失败，本次跳过部署：{e:#}");
             continue;
@@ -361,10 +367,13 @@ fn deploy_vercel(root: &Path, config: &Config, dry_run: bool) -> anyhow::Result<
         "files": payload_files,
         "projectSettings": { "framework": null },
     });
+    // 一次序列化直接发送：payload 里是全站 base64，`to_string()` 再拷一份
+    // 会让内存峰值翻倍。
+    let body_bytes = serde_json::to_vec(&payload)?;
     let resp = ureq::post(&url)
         .set("Authorization", &format!("Bearer {token}"))
         .set("Content-Type", "application/json")
-        .send_string(&payload.to_string())
+        .send_bytes(&body_bytes)
         .map_err(|e| anyhow::anyhow!("Vercel API 请求失败: {e}"))?;
     let status = resp.status();
     let body = resp.into_string().unwrap_or_default();
@@ -450,8 +459,10 @@ fn deploy_git(root: &Path, config: &Config, dry_run: bool) -> anyhow::Result<()>
 
     ensure_built(root, config)?;
 
+    // 目录名带 pid：同秒内的两次部署（如 serve 定时部署与手动 deploy 并行）
+    // 不再互相覆盖临时仓库（对照 packages.rs 的下载目录惯例）。
     let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S").to_string();
-    let tmp = std::env::temp_dir().join(format!("typall-deploy-{stamp}"));
+    let tmp = std::env::temp_dir().join(format!("typall-deploy-{stamp}-{}", std::process::id()));
 
     // 1. 准备仓库
     if repo.is_empty() {

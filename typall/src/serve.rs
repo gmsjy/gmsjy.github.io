@@ -301,6 +301,11 @@ pub fn serve(
     };
     let status = Arc::new(watch::Sender::new(initial));
 
+    // 构建互斥锁：文件监听重建、live 单篇重建、定时部署构建三个 actor 都会跑
+    // build::build——并发时 manifest 读写与孤儿清理会互相踩踏（A 的清理可能
+    // 删掉 B 刚写出的文件）。一把项目级锁把构建/部署串行化。
+    let build_lock = Arc::new(std::sync::Mutex::new(()));
+
     // 实时模式状态：目标文章 + 单篇编译器 + 文章列表（导航上下文）。
     // 初始化失败降级为常规 serve（编辑器修好文章后全量重建路径仍可用）。
     let live = match &focus {
@@ -340,8 +345,9 @@ pub fn serve(
         let root = root.clone();
         let config = config.clone();
         let status = status.clone();
+        let build_lock = build_lock.clone();
         std::thread::spawn(move || {
-            if let Err(e) = watch_loop(&root, config, status, live) {
+            if let Err(e) = watch_loop(&root, config, status, live, build_lock) {
                 eprintln!("文件监听出错: {e}");
             }
         });
@@ -349,7 +355,7 @@ pub fn serve(
 
     // 定时/周期部署（[deploy.schedule]）：常驻期间后台按计划构建并部署——
     // 定时发布的文章到点自动上线，无需外部 CI cron。
-    crate::deploy::spawn_scheduled_deploy(root.clone(), config.clone());
+    crate::deploy::spawn_scheduled_deploy(root.clone(), config.clone(), build_lock);
 
     // HTTP 服务器
     let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -433,7 +439,7 @@ async fn index_handler(
     State(state): State<Arc<ServeState>>,
     headers: HeaderMap,
 ) -> Response {
-    serve_static(&state, "index.html", &headers)
+    serve_static_async(state.public.clone(), "index.html".to_string(), headers).await
 }
 
 async fn static_handler(
@@ -441,7 +447,20 @@ async fn static_handler(
     AxumPath(path): AxumPath<String>,
     headers: HeaderMap,
 ) -> Response {
-    serve_static(&state, &path, &headers)
+    serve_static_async(state.public.clone(), path, headers).await
+}
+
+/// 磁盘读 + 实时 gzip 都是阻塞操作，必须移入 spawn_blocking：
+/// LAN 模式（--host 0.0.0.0）下并发请求共享同一 tokio worker 池，
+/// 在 async 上下文里做慢盘读会卡住整个 runtime。
+async fn serve_static_async(public: PathBuf, rel: String, headers: HeaderMap) -> Response {
+    match tokio::task::spawn_blocking(move || serve_static(&public, &rel, &headers)).await {
+        Ok(resp) => resp,
+        Err(e) => {
+            eprintln!("静态文件请求处理失败: {e}");
+            not_found()
+        }
+    }
 }
 
 /// 解析 `Accept-Encoding`，返回 `(接受 gzip, 接受 brotli)`。
@@ -479,14 +498,14 @@ fn is_safe_rel_path(rel: &str) -> bool {
         .all(|c| matches!(c, std::path::Component::Normal(_)))
 }
 
-fn serve_static(state: &ServeState, rel: &str, headers: &HeaderMap) -> Response {
+fn serve_static(public: &Path, rel: &str, headers: &HeaderMap) -> Response {
     // 路径遍历防护：组件级校验。仅挡 `..` 不够——Windows 上 `Path::join`
     // 遇到带盘符/根的路径（如 axum 通配路由解码后保留的 `C:/Windows/win.ini`）
     // 会整体替换基路径，造成任意文件读取。只放行纯相对分量。
     if !is_safe_rel_path(rel) {
         return not_found();
     }
-    let mut full = state.public.join(rel);
+    let mut full = public.join(rel);
     if full.is_dir() {
         full = full.join("index.html");
     }
@@ -604,6 +623,7 @@ fn watch_loop(
     config: Config,
     status: Arc<watch::Sender<BuildStatus>>,
     mut live: Option<LiveState>,
+    build_lock: Arc<std::sync::Mutex<()>>,
 ) -> anyhow::Result<()> {
     let mut config = config;
     let (tx, rx) = std::sync::mpsc::channel::<notify::Result<notify::Event>>();
@@ -649,6 +669,10 @@ fn watch_loop(
                     // typall.toml 的语义变更（如切换 [theme] name）必须重新加载
                     // 才会生效——否则热重建永远沿用 serve 启动时的快照。
                     config = reload_config(root, config);
+                    // 与定时部署/live 快速路径互斥：构建产物（manifest、孤儿清理）
+                    // 不允许并发写（见 serve() 里 build_lock 的注释）。
+                    let _guard =
+                        build_lock.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
                     // 实时模式快速路径：本次变化只涉及目标文章 → 单篇重编译，
                     // 跳过集合页/Feed/搜索索引等站点级产物（毫秒级出页面）。
                     if let Some(state) = live.as_mut()
@@ -1033,16 +1057,14 @@ mod tests {
         let tmp = std::env::temp_dir().join("typall-serve-traversal-test");
         std::fs::create_dir_all(tmp.join("posts")).unwrap();
         std::fs::write(tmp.join("posts").join("ok.html"), "<p>ok</p>").unwrap();
-        let (tx, _rx) = watch::channel(BuildStatus { version: 0, error: None });
-        let state = ServeState { public: tmp.clone(), status: Arc::new(tx) };
         let headers = HeaderMap::new();
 
         // 站内文件可读
-        let resp = serve_static(&state, "posts/ok.html", &headers);
+        let resp = serve_static(&tmp, "posts/ok.html", &headers);
         assert_eq!(resp.status(), 200);
         // 盘符绝对路径与遍历一律 404，且确实没有读出 public/ 之外的文件
         for evil in ["C:/Windows/win.ini", "/C:/Windows/win.ini", "../Cargo.toml", "/etc/passwd"] {
-            let resp = serve_static(&state, evil, &headers);
+            let resp = serve_static(&tmp, evil, &headers);
             assert_eq!(resp.status(), 404, "路径 `{evil}` 应被拒绝");
         }
         std::fs::remove_dir_all(&tmp).ok();
