@@ -315,6 +315,10 @@ pub fn serve(root: &Path, config: Config, port: u16, open: bool, host: Option<&s
         });
     }
 
+    // 定时/周期部署（[deploy.schedule]）：常驻期间后台按计划构建并部署——
+    // 定时发布的文章到点自动上线，无需外部 CI cron。
+    crate::deploy::spawn_scheduled_deploy(root.clone(), config.clone());
+
     // HTTP 服务器
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()

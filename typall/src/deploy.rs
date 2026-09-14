@@ -40,6 +40,178 @@ pub fn deploy(
     result
 }
 
+// ---------------------------------------------------------------------------
+// 定时/周期部署（[deploy.schedule]，serve 常驻期间后台执行）
+// ---------------------------------------------------------------------------
+
+/// 单个部署触发器。
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum ScheduleTrigger {
+    /// 固定周期（自上次部署完成起算）。
+    Every(std::time::Duration),
+    /// 每天本地时刻 HH:MM。
+    DailyAt(u8, u8),
+}
+
+/// 校验 `[deploy.schedule]` 格式（Config::load 启动期调用，报人话错误）。
+pub(crate) fn validate_schedule(
+    schedule: &crate::config::DeploySchedule,
+) -> anyhow::Result<()> {
+    parse_schedule(schedule).map(|_| ())
+}
+
+/// 解析计划为触发器列表；两字段皆空 = 停用（空 Vec）。
+pub(crate) fn parse_schedule(
+    schedule: &crate::config::DeploySchedule,
+) -> anyhow::Result<Vec<ScheduleTrigger>> {
+    let mut triggers = Vec::new();
+    if !schedule.every.trim().is_empty() {
+        triggers.push(ScheduleTrigger::Every(parse_interval(&schedule.every)?));
+    }
+    for t in &schedule.daily {
+        let (h, m) = parse_hhmm(t)?;
+        triggers.push(ScheduleTrigger::DailyAt(h, m));
+    }
+    Ok(triggers)
+}
+
+/// 周期间隔：数字 + 单位（m/h/d），最小 1 分钟。
+fn parse_interval(s: &str) -> anyhow::Result<std::time::Duration> {
+    let raw = s.trim();
+    let (digits, unit) = raw.split_at(raw.len().saturating_sub(1));
+    let secs = match unit {
+        "m" => 60u64,
+        "h" => 3600,
+        "d" => 86400,
+        _ => anyhow::bail!("deploy.schedule.every = {s:?} 格式错误：应为 数字+单位（如 30m / 2h / 1d）"),
+    };
+    let n: u64 = digits
+        .trim()
+        .parse()
+        .map_err(|_| anyhow::anyhow!("deploy.schedule.every = {s:?} 格式错误：应为 数字+单位（如 30m / 2h / 1d）"))?;
+    let total = n
+        .checked_mul(secs)
+        .ok_or_else(|| anyhow::anyhow!("deploy.schedule.every = {s:?} 数值过大"))?;
+    if total < 60 {
+        anyhow::bail!("deploy.schedule.every = {s:?} 周期过短：最少 1 分钟");
+    }
+    Ok(std::time::Duration::from_secs(total))
+}
+
+/// 每日时刻 "HH:MM"（小时可 1-2 位，分钟 0-59）。
+fn parse_hhmm(s: &str) -> anyhow::Result<(u8, u8)> {
+    let (h, m) = s
+        .trim()
+        .split_once(':')
+        .ok_or_else(|| anyhow::anyhow!("deploy.schedule.daily = {s:?} 格式错误：应为 HH:MM（如 06:30 / 21:00）"))?;
+    let h: u8 = h
+        .trim()
+        .parse()
+        .map_err(|_| anyhow::anyhow!("deploy.schedule.daily = {s:?} 小时位格式错误"))?;
+    let m: u8 = m
+        .trim()
+        .parse()
+        .map_err(|_| anyhow::anyhow!("deploy.schedule.daily = {s:?} 分钟位格式错误"))?;
+    if h > 23 {
+        anyhow::bail!("deploy.schedule.daily = {s:?} 小时需在 00-23");
+    }
+    if m > 59 {
+        anyhow::bail!("deploy.schedule.daily = {s:?} 分钟需在 00-59");
+    }
+    Ok((h, m))
+}
+
+/// 计划的人类可读描述（serve 启动横幅与触发日志共用）。
+pub(crate) fn describe_schedule(triggers: &[ScheduleTrigger]) -> String {
+    let mut parts: Vec<String> = Vec::new();
+    let mut dailies: Vec<String> = Vec::new();
+    for t in triggers {
+        match t {
+            ScheduleTrigger::Every(d) => parts.push(format!("每 {}", humanize_duration(*d))),
+            ScheduleTrigger::DailyAt(h, m) => dailies.push(format!("{h:02}:{m:02}")),
+        }
+    }
+    if !dailies.is_empty() {
+        parts.push(format!("每天 {}", dailies.join("、")));
+    }
+    parts.join("；")
+}
+
+fn humanize_duration(d: std::time::Duration) -> String {
+    let secs = d.as_secs();
+    if secs.is_multiple_of(86400) {
+        format!("{}d", secs / 86400)
+    } else if secs.is_multiple_of(3600) {
+        format!("{}h", secs / 3600)
+    } else {
+        format!("{}m", secs / 60)
+    }
+}
+
+/// 距下一次触发的时长（取所有触发器中最近的一个）。
+pub(crate) fn next_wait(
+    triggers: &[ScheduleTrigger],
+    now: chrono::DateTime<chrono::Local>,
+) -> std::time::Duration {
+    let mut best: Option<chrono::Duration> = None;
+    for t in triggers {
+        let delta = match t {
+            ScheduleTrigger::Every(d) => chrono::Duration::from_std(*d).unwrap_or_else(|_| chrono::Duration::minutes(1)),
+            ScheduleTrigger::DailyAt(h, m) => {
+                let today = now
+                    .date_naive()
+                    .and_hms_opt((*h).into(), (*m).into(), 0)
+                    .unwrap_or_default();
+                let target = if today <= now.naive_local() {
+                    today + chrono::Duration::days(1)
+                } else {
+                    today
+                };
+                target - now.naive_local()
+            }
+        };
+        if best.is_none_or(|b| delta < b) {
+            best = Some(delta);
+        }
+    }
+    best.and_then(|d| d.to_std().ok())
+        .unwrap_or(std::time::Duration::from_secs(60))
+}
+
+/// serve 启动时挂载定时部署后台线程；未配置 `[deploy.schedule]` 返回 None。
+///
+/// 每次触发：重读配置（策略/仓库/计划的修改免重启）→ 全量构建（增量缓存，
+/// 未变文章直接命中；定时发布的未来日期文章由这一步到点带上线）→ 按
+/// `[deploy] strategy` 部署一次。构建或部署失败只告警不退出，等下次触发。
+pub(crate) fn spawn_scheduled_deploy(
+    root: PathBuf,
+    config: Config,
+) -> Option<std::thread::JoinHandle<()>> {
+    let triggers = parse_schedule(&config.deploy.schedule).ok()?;
+    if triggers.is_empty() {
+        return None;
+    }
+    println!("⏰ 定时部署已启动：{}（[deploy.schedule]，随 serve 常驻）", describe_schedule(&triggers));
+    Some(std::thread::spawn(move || loop {
+        std::thread::sleep(next_wait(&triggers, chrono::Local::now()));
+        println!("⏰ 定时部署触发……");
+        let config = match Config::load(&root) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("⚠️ 定时部署跳过（配置读取失败）：{e:#}");
+                continue;
+            }
+        };
+        if let Err(e) = build::build(&root, &config, false) {
+            eprintln!("⚠️ 定时部署的构建失败，本次跳过部署：{e:#}");
+            continue;
+        }
+        if let Err(e) = deploy(&root, &config, None, false) {
+            eprintln!("⚠️ 定时部署失败（下个周期自动重试）：{e:#}");
+        }
+    }))
+}
+
 /// 解析 API token：优先配置值，其次环境变量（token 直接写配置文件不安全）。
 fn auth_token(config_val: &str, env_name: &str) -> anyhow::Result<String> {
     if !config_val.trim().is_empty() {
@@ -486,6 +658,98 @@ mod tests {
         let msg = commit_message("Deploy at {timestamp}");
         assert!(msg.starts_with("Deploy at "));
         assert!(msg.len() > "Deploy at ".len());
+    }
+
+    fn schedule(every: &str, daily: &[&str]) -> crate::config::DeploySchedule {
+        crate::config::DeploySchedule {
+            every: every.to_string(),
+            daily: daily.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    #[test]
+    fn parse_schedule_accepts_intervals_and_daily() {
+        let t = parse_schedule(&schedule("30m", &["06:30", "21:00"])).unwrap();
+        assert_eq!(
+            t,
+            vec![
+                ScheduleTrigger::Every(std::time::Duration::from_secs(30 * 60)),
+                ScheduleTrigger::DailyAt(6, 30),
+                ScheduleTrigger::DailyAt(21, 0),
+            ]
+        );
+        // 1 位小时 / 1 位分钟也接受
+        let t2 = parse_schedule(&schedule("2h", &["6:05"])).unwrap();
+        assert_eq!(t2[1], ScheduleTrigger::DailyAt(6, 5));
+        // 空配置 = 停用
+        assert!(parse_schedule(&schedule("", &[])).unwrap().is_empty());
+        // 只配 daily 也行
+        assert_eq!(
+            parse_schedule(&schedule("", &["23:59"])).unwrap(),
+            vec![ScheduleTrigger::DailyAt(23, 59)]
+        );
+    }
+
+    #[test]
+    fn parse_schedule_rejects_bad_input() {
+        // 周期格式
+        assert!(parse_schedule(&schedule("abc", &[])).is_err());
+        assert!(parse_schedule(&schedule("30", &[])).is_err()); // 缺单位
+        assert!(parse_schedule(&schedule("30x", &[])).is_err());
+        assert!(parse_schedule(&schedule("0m", &[])).is_err()); // 小于 1 分钟
+        // 时刻格式
+        assert!(parse_schedule(&schedule("", &["24:00"])).is_err());
+        assert!(parse_schedule(&schedule("", &["12:60"])).is_err());
+        assert!(parse_schedule(&schedule("", &["1230"])).is_err());
+        assert!(parse_schedule(&schedule("", &["aa:bb"])).is_err());
+    }
+
+    #[test]
+    fn next_wait_picks_nearest_trigger() {
+        use chrono::TimeZone;
+        // 固定「现在」：2026-09-14 10:00 本地时间
+        let now = chrono::Local
+            .with_ymd_and_hms(2026, 9, 14, 10, 0, 0)
+            .unwrap();
+        // 周期：直接返回周期本身
+        assert_eq!(
+            next_wait(&[ScheduleTrigger::Every(std::time::Duration::from_secs(1800))], now),
+            std::time::Duration::from_secs(1800)
+        );
+        // 今日 21:00 未到 → 11 小时
+        assert_eq!(
+            next_wait(&[ScheduleTrigger::DailyAt(21, 0)], now),
+            std::time::Duration::from_secs(11 * 3600)
+        );
+        // 今日 09:00 已过 → 明天 09:00，即 23 小时
+        assert_eq!(
+            next_wait(&[ScheduleTrigger::DailyAt(9, 0)], now),
+            std::time::Duration::from_secs(23 * 3600)
+        );
+        // 恰好等于当前时刻 → 算作已过，取明天
+        assert_eq!(
+            next_wait(&[ScheduleTrigger::DailyAt(10, 0)], now),
+            std::time::Duration::from_secs(24 * 3600)
+        );
+        // 多触发器取最近（30m < 11h）
+        assert_eq!(
+            next_wait(
+                &[
+                    ScheduleTrigger::Every(std::time::Duration::from_secs(1800)),
+                    ScheduleTrigger::DailyAt(21, 0),
+                ],
+                now
+            ),
+            std::time::Duration::from_secs(1800)
+        );
+    }
+
+    #[test]
+    fn describe_schedule_is_human_readable() {
+        let t = parse_schedule(&schedule("30m", &["06:30", "21:00"])).unwrap();
+        assert_eq!(describe_schedule(&t), "每 30m；每天 06:30、21:00");
+        let only_daily = parse_schedule(&schedule("", &["09:05"])).unwrap();
+        assert_eq!(describe_schedule(&only_daily), "每天 09:05");
     }
 
     #[test]

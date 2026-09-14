@@ -74,6 +74,27 @@ pub struct DeployConfig {
     pub copy: CopyDeploy,
     pub netlify: NetlifyDeploy,
     pub vercel: VercelDeploy,
+    /// 定时/周期部署（`[deploy.schedule]`）：serve 常驻期间按计划自动
+    /// 构建并执行一次部署。缺省（两字段皆空）= 停用。
+    pub schedule: DeploySchedule,
+}
+
+/// 定时/周期部署计划。
+///
+/// ```toml
+/// [deploy.schedule]
+/// every = "30m"                 # 周期触发：30m / 2h / 1d（≥1 分钟）
+/// daily = ["06:30", "21:00"]    # 每日定点触发（本地时区 HH:MM，可多个）
+/// ```
+/// 两者可同时配置，到点即构建并按 `[deploy] strategy` 部署一次；
+/// 定时发布（未来日期文章到点自动上线）因此无需依赖外部 CI cron。
+#[derive(Debug, Clone, Deserialize, Default)]
+#[serde(default)]
+pub struct DeploySchedule {
+    /// 周期间隔（如 "30m" / "2h" / "1d"），空 = 停用。
+    pub every: String,
+    /// 每日定点时刻列表（"HH:MM"），空 = 停用。
+    pub daily: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -163,6 +184,9 @@ impl Config {
         if config.build.posts_per_page == 0 {
             config.build.posts_per_page = 20;
         }
+        // 定时部署计划尽早校验：格式错误在启动时报人话错误，
+        // 而不是等 serve 挂上后台线程后第一次触发才发现。
+        crate::deploy::validate_schedule(&config.deploy.schedule)?;
 
         // 环境变量覆盖（TP_ 前缀，便于 CI/CD 注入）
         apply_env_overrides(&mut config);
@@ -286,6 +310,29 @@ mod tests {
         .unwrap();
         let config = Config::load(&root).unwrap();
         assert_eq!(config.publish.out_dir, "publish");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn load_rejects_bad_deploy_schedule() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let root = std::env::temp_dir().join("typall-test-bad-schedule");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("typall.toml"),
+            "[deploy.schedule]\nevery = \"5x\"\n",
+        )
+        .unwrap();
+        let err = Config::load(&root).unwrap_err();
+        assert!(format!("{err:#}").contains("every"), "报错应提及 every: {err:#}");
+        // 合法计划通过校验
+        std::fs::write(
+            root.join("typall.toml"),
+            "[deploy.schedule]\nevery = \"30m\"\ndaily = [\"21:00\"]\n",
+        )
+        .unwrap();
+        assert!(Config::load(&root).is_ok());
         let _ = std::fs::remove_dir_all(&root);
     }
 

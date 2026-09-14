@@ -119,6 +119,10 @@ auth_token = "nfp_xxx"         # 或环境变量 NETLIFY_AUTH_TOKEN
 [deploy.vercel]                # strategy = "vercel"
 project_id = "prj_xxx"         # 可选；留空则自动创建新项目
 auth_token = "xxx"             # 或环境变量 VERCEL_TOKEN
+
+[deploy.schedule]              # 定时/周期部署（serve 常驻时后台执行，可省略）
+every = "30m"                  # 周期触发：30m / 2h / 1d（≥1 分钟）
+daily = ["06:30", "21:00"]     # 每日定点触发（本地时区 HH:MM，可多个）
 ```
 
 `--target netlify|vercel` 可临时覆盖配置中的 strategy。部署前执行 `pre_deploy`、成功后执行 `post_deploy` 钩子（shell 命令，`--dry-run` 均跳过）。token 建议用环境变量（`NETLIFY_AUTH_TOKEN` / `VERCEL_TOKEN`）避免写入配置文件：
@@ -127,6 +131,8 @@ auth_token = "xxx"             # 或环境变量 VERCEL_TOKEN
 NETLIFY_AUTH_TOKEN=nfp_xxx typall deploy --target netlify
 typall deploy --target netlify --dry-run   # 仅打印将要调用的 API 与参数
 ```
+
+**定时/周期部署**：配置 `[deploy.schedule]` 后，`typall serve` 常驻期间会在后台按计划自动「构建 → 部署」——每次触发都重读配置（改策略/仓库/计划免重启），构建走增量缓存，`daily` 定时点会让未来日期的定时发布文章到点自动上线（无需外部 CI cron）。不配置该节则行为不变。
 
 > 以上是配置项参考；**按平台走完部署的完整步骤**（GitHub Pages 三种姿势、token 环境变量、
 > 生产检查清单、定时发布联动）见下文[「部署指南（deploy）」](#部署指南deploy)。
