@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gmsjy.github.io/sitemap.xml

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CeTZ 插图演示：用 Typst 画图 · 知止的物理世界</title>
+<meta name="description" content="一个用 Typst 驱动的静态博客">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="canonical" href="https://gmsjy.github.io/posts/cetz-demo/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CeTZ 插图演示：用 Typst 画图">
+<meta property="og:description" content="用 CeTZ 在文章里画图 Typall 现在支持 Typst 的第三方包（@preview）。这篇文章演示用 CeTZ（受 TikZ 启发的绘图库）在正文里直接编写矢量插图，编译为内联 SVG。 一个简单的坐标系 先画一条从原点出发的射线和一个标记点： 图里的 坐标是 ，这是最基础的 line 与 content 组合。 三角函数单位圆 CeTZ 最经典的示例——单位圆上的正弦与余弦： 流程图…">
+<meta property="og:url" content="https://gmsjy.github.io/posts/cetz-demo/"><meta property="og:image" content="https://gmsjy.github.io/og/posts-cetz-demo.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context": "https://schema.org","@type": "BlogPosting","headline": "CeTZ 插图演示：用 Typst 画图","url": "https://gmsjy.github.io/posts/cetz-demo/","author": {"@type": "Person", "name": "gmsjy"},"description": "用 CeTZ 在文章里画图 Typall 现在支持 Typst 的第三方包（@preview）。这篇文章演示用 CeTZ（受 TikZ 启发的绘图库）在正文里直接编写矢量插图，编译为内联 SVG。 一个简单的坐标系 先画一条从原点出发的射线和一个标记点： 图里的 坐标是 ，这是最基础的 line 与 content 组合。 三角函数单位圆 CeTZ 最经典的示例——单位圆上的正弦与余弦： 流程图…","datePublished": "2026-09-02","image": "https://gmsjy.github.io/og/posts-cetz-demo.png"}</script>
+
+
+</head>
+<body>
+<a class="skip-link" href="#content">跳到正文</a>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="/">知止的物理世界</a>
+    <nav class="site-nav" aria-label="主导航">
+      <a href="/">首页</a>
+      <a href="/series/">专栏</a><a href="/tags/">标签</a><a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+    </nav>
+  </div>
+</header>
+<main id="content">
+<article><h1>CeTZ 插图演示：用 Typst 画图</h1><div class="meta"><span>2026-09-02</span> <a class="tag" href="/tags/Typst/">Typst</a><a class="tag" href="/tags/CeTZ/">CeTZ</a><a class="tag" href="/tags/绘图/">绘图</a></div><nav class="toc"><details><summary>目录</summary><ul class="toc-list"><li class="toc-l2"><a href="#用-CeTZ-在文章里画图">用 CeTZ 在文章里画图</a></li><li class="toc-l3"><a href="#一个简单的坐标系">一个简单的坐标系</a></li><li class="toc-l3"><a href="#三角函数单位圆">三角函数单位圆</a></li><li class="toc-l3"><a href="#流程图">流程图</a></li><li class="toc-l2"><a href="#小结">小结</a></li></ul></details></nav>
+    <h2 id="用-CeTZ-在文章里画图">用 CeTZ 在文章里画图</h2>
+    <p>Typall 现在支持 Typst 的第三方包（<code>@preview</code>）。这篇文章演示用 <em>CeTZ</em>（受 TikZ 启发的绘图库）在正文里直接编写矢量插图，编译为内联 SVG。</p>
+    <h3 id="一个简单的坐标系">一个简单的坐标系</h3>
+    <p>先画一条从原点出发的射线和一个标记点：</p>
+    <svg height="279.880984252pt" style="overflow: visible; width: 32.323875447em; height: 25.443725841em; display: block" viewBox="0 0 355.562629921 279.880984252" width="355.562629921pt" xmlns:h5="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <g>
+        <path d="M 0 0m 0 226.771653543l 340.157480315 -226.771653543" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(6.803149606 3.7565)"></path>
+        <path d="M 0 0m 6.803149606 0c -3.753869102 0 -6.803149606 3.049280504 -6.803149606 6.803149606c 0 3.753869102 3.049280504 6.803149606 6.803149606 6.803149606c 3.753869102 0 6.803149606 -3.049280504 6.803149606 -6.803149606c 0 -3.753869102 -3.049280504 -6.803149606 -6.803149606 -6.803149606Z " fill="currentColor" fill-rule="nonzero" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(0 223.725003937)"></path>
+        <path d="M 0 0h 8.602v 7.513h -8.602v -7.513Z " fill="none" transform="translate(346.960629921)"></path>
+        <g transform="translate(346.960629417 -2.2e-7)">
+          <g transform="matrix(1 0 0 -1 5.04e-7 7.513)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gA0FB579194F343CD9FDF753DC465FC21"></use>
+          </g>
+        </g>
+        <path d="M 0 0h 8.448v 7.997h -8.448v -7.997Z " fill="none" transform="translate(2.579149606 271.883984252)"></path>
+        <g transform="translate(2.579149417 271.883984094)">
+          <g transform="matrix(1 0 0 -1 1.89e-7 7.755)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g43D3464A592F83B8BDAB3879DDEE25E"></use>
+          </g>
+        </g>
+      </g>
+      <defs>
+        <symbol id="gA0FB579194F343CD9FDF753DC465FC21" overflow="visible">
+          <path d="M 0 0m 6.105 7.513h -3.52c -0.253 0 -0.374 -0.011 -0.374 -0.253c 0 -0.121 0.121 -0.176 0.363 -0.176c 0.22 0 0.66 0.033 0.66 -0.143c 0 -0.022 -0.011 -0.088 -0.044 -0.198l -1.452 -5.841c -0.066 -0.242 -0.176 -0.385 -0.33 -0.44c -0.077 -0.022 -0.275 -0.033 -0.616 -0.033c -0.242 0 -0.352 -0.022 -0.352 -0.253c 0 -0.121 0.066 -0.176 0.209 -0.176l 1.375 0.033l 0.704 -0.011c 0.121 0 0.561 -0.022 0.704 -0.022c 0.176 0 0.264 0.088 0.264 0.264c 0 0.11 -0.121 0.165 -0.352 0.165c -0.44 0 -0.66 0.044 -0.66 0.143c 0 0 0.011 0.033 0.033 0.176l 0.66 2.684h 1.815c 0.715 0 1.397 0.22 2.035 0.649c 0.715 0.473 1.067 1.056 1.067 1.749c 0 1.089 -1.034 1.683 -2.189 1.683Z m -0.341 -0.429c 0.957 0 1.43 -0.33 1.43 -0.99c 0 -0.616 -0.308 -1.441 -0.627 -1.727c -0.418 -0.374 -0.968 -0.561 -1.65 -0.561h -1.474l 0.726 2.904c 0.088 0.374 0.088 0.374 0.55 0.374Z "></path>
+        </symbol>
+        <symbol id="g43D3464A592F83B8BDAB3879DDEE25E" overflow="visible">
+          <path d="M 0 0m 7.722 2.893c 0.275 0.627 0.418 1.254 0.418 1.892c 0 0.858 -0.253 1.562 -0.77 2.123c -0.517 0.561 -1.199 0.847 -2.046 0.847c -0.583 0 -1.166 -0.143 -1.749 -0.429c -1.188 -0.583 -2.057 -1.507 -2.618 -2.761c -0.275 -0.616 -0.418 -1.232 -0.418 -1.859c 0 -0.869 0.253 -1.573 0.77 -2.123c 0.517 -0.55 1.199 -0.825 2.057 -0.825c 0.572 0 1.144 0.143 1.727 0.418c 1.199 0.583 2.068 1.496 2.629 2.717Z m -0.638 2.321c 0 -1.463 -0.66 -2.926 -1.364 -3.795c -0.484 -0.605 -1.32 -1.287 -2.288 -1.287c -1.177 0 -1.793 1.023 -1.793 2.266c 0 0.385 0.077 0.902 0.22 1.529c 0.297 1.298 1.045 2.442 2.024 3.036c 0.473 0.286 0.935 0.429 1.375 0.429c 1.188 0 1.826 -0.946 1.826 -2.178Z "></path>
+        </symbol>
+      </defs>
+    </svg>
+    <p>图里的 <span data-equation="inline"><svg height="7.513pt" style="overflow: visible; width: 0.782em; height: 0.683em;" viewBox="0 0 8.602 7.513" width="8.602pt" xmlns:h5="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g transform="matrix(1 0 0 -1 0 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gA0FB579194F343CD9FDF753DC465FC21"></use></g><defs><symbol id="gA0FB579194F343CD9FDF753DC465FC21" overflow="visible"><path d="M 0 0m 6.105 7.513h -3.52c -0.253 0 -0.374 -0.011 -0.374 -0.253c 0 -0.121 0.121 -0.176 0.363 -0.176c 0.22 0 0.66 0.033 0.66 -0.143c 0 -0.022 -0.011 -0.088 -0.044 -0.198l -1.452 -5.841c -0.066 -0.242 -0.176 -0.385 -0.33 -0.44c -0.077 -0.022 -0.275 -0.033 -0.616 -0.033c -0.242 0 -0.352 -0.022 -0.352 -0.253c 0 -0.121 0.066 -0.176 0.209 -0.176l 1.375 0.033l 0.704 -0.011c 0.121 0 0.561 -0.022 0.704 -0.022c 0.176 0 0.264 0.088 0.264 0.264c 0 0.11 -0.121 0.165 -0.352 0.165c -0.44 0 -0.66 0.044 -0.66 0.143c 0 0 0.011 0.033 0.033 0.176l 0.66 2.684h 1.815c 0.715 0 1.397 0.22 2.035 0.649c 0.715 0.473 1.067 1.056 1.067 1.749c 0 1.089 -1.034 1.683 -2.189 1.683Z m -0.341 -0.429c 0.957 0 1.43 -0.33 1.43 -0.99c 0 -0.616 -0.308 -1.441 -0.627 -1.727c -0.418 -0.374 -0.968 -0.561 -1.65 -0.561h -1.474l 0.726 2.904c 0.088 0.374 0.088 0.374 0.55 0.374Z "></path></symbol></defs></svg></span> 坐标是 <span data-equation="inline"><svg height="7.513pt" style="overflow: visible; width: 2.222666667em; height: 0.683em;" viewBox="0 0 24.449333333 7.513" width="24.449333333pt" xmlns:h5="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g transform="matrix(1 0 0 -1 0 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gCBFDB4FAA60E8030E7B751E03D6CAAA6"></use></g><g transform="matrix(1 0 0 -1 4.279 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gC63E28D2FF745BC8AEDEB058F758CC95"></use></g><g transform="matrix(1 0 0 -1 9.779 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g9B70CA9012D97E517A6B8C0C8B155EFF"></use></g><g transform="matrix(1 0 0 -1 14.670333333 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g5037E03A0CBEB30198DBAC9F97CDF04F"></use></g><g transform="matrix(1 0 0 -1 20.170333333 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g11C1096A524ED08942C2BB5E0564A17C"></use></g><defs><symbol id="gCBFDB4FAA60E8030E7B751E03D6CAAA6" overflow="visible"><path d="M 0 0m 3.498 -2.728c 0.099 0 0.154 0.055 0.154 0.154c 0 0.033 -0.022 0.077 -0.055 0.121c -0.572 0.44 -1.034 1.166 -1.375 2.167c -0.297 0.869 -0.451 1.727 -0.451 2.574v 0.924c 0 0.847 0.154 1.705 0.451 2.574c 0.341 1.001 0.803 1.727 1.375 2.167c 0.033 0.033 0.055 0.077 0.055 0.121c 0 0.099 -0.055 0.154 -0.154 0.154c -0.011 0 -0.044 -0.011 -0.077 -0.033c -0.66 -0.506 -1.21 -1.254 -1.661 -2.255c -0.429 -0.957 -0.649 -1.859 -0.649 -2.728v -0.924c 0 -0.869 0.22 -1.771 0.649 -2.728c 0.451 -1.001 1.001 -1.749 1.661 -2.255c 0.033 -0.022 0.066 -0.033 0.077 -0.033Z "></path></symbol><symbol id="gC63E28D2FF745BC8AEDEB058F758CC95" overflow="visible"><path d="M 0 0m 3.333 3.883c 0.726 0.275 1.408 0.968 1.408 1.903c 0 0.473 -0.231 0.858 -0.682 1.155c -0.396 0.253 -0.847 0.385 -1.353 0.385c -0.495 0 -0.924 -0.132 -1.309 -0.385c -0.429 -0.286 -0.649 -0.66 -0.649 -1.133c 0 -0.363 0.242 -0.616 0.594 -0.616c 0.352 0 0.594 0.253 0.594 0.605c 0 0.363 -0.209 0.561 -0.627 0.583c 0.286 0.385 0.737 0.583 1.353 0.583c 0.66 0 0.99 -0.385 0.99 -1.166c 0 -0.462 -0.088 -0.847 -0.253 -1.166c -0.297 -0.528 -0.704 -0.627 -1.386 -0.627c -0.132 -0.022 -0.198 -0.077 -0.198 -0.176c 0 -0.165 0.077 -0.165 0.297 -0.165h 0.473c 0.825 0 1.243 -0.583 1.243 -1.76c 0 -0.935 -0.341 -1.749 -1.177 -1.749c -0.715 0 -1.243 0.242 -1.562 0.726c 0.385 -0.011 0.671 0.275 0.671 0.649c 0 0.374 -0.275 0.649 -0.649 0.649c -0.429 0 -0.649 -0.22 -0.649 -0.671c 0 -0.539 0.242 -0.968 0.726 -1.309c 0.429 -0.297 0.935 -0.44 1.496 -0.44c 0.627 0 1.166 0.209 1.639 0.616c 0.473 0.407 0.704 0.913 0.704 1.529c 0 1.034 -0.814 1.749 -1.694 1.98Z "></path></symbol><symbol id="g9B70CA9012D97E517A6B8C0C8B155EFF" overflow="visible"><path d="M 0 0m 1.529 1.166c -0.352 0 -0.583 -0.264 -0.583 -0.616c 0 -0.33 0.253 -0.605 0.583 -0.605c 0.154 0 0.286 0.044 0.385 0.143l 0.011 -0.088c 0 -0.693 -0.231 -1.287 -0.693 -1.76c -0.077 -0.088 -0.121 -0.154 -0.121 -0.198c 0 -0.11 0.044 -0.165 0.143 -0.165c 0.099 0 0.231 0.132 0.418 0.385c 0.374 0.528 0.561 1.111 0.561 1.738c 0 0.583 -0.198 1.166 -0.704 1.166Z "></path></symbol><symbol id="g5037E03A0CBEB30198DBAC9F97CDF04F" overflow="visible"><path d="M 0 0m 2.607 7.326c -0.561 0 -1.034 -0.198 -1.441 -0.594c -0.407 -0.396 -0.616 -0.858 -0.616 -1.419c 0 -0.374 0.275 -0.649 0.616 -0.649c 0.33 0 0.605 0.286 0.605 0.616c 0 0.363 -0.264 0.616 -0.616 0.616c -0.033 0 -0.055 0 -0.077 -0.011c 0.209 0.539 0.693 1.012 1.386 1.012c 0.902 0 1.408 -0.781 1.408 -1.727c 0 -0.737 -0.374 -1.529 -1.122 -2.365l -2.068 -2.332c -0.143 -0.165 -0.132 -0.154 -0.132 -0.473h 4.081l 0.319 1.98h -0.363c -0.088 -0.561 -0.165 -0.88 -0.231 -0.979c -0.055 -0.055 -0.385 -0.077 -0.99 -0.077h -1.837l 1.067 1.045c 0.748 0.704 1.694 1.463 2.013 2.046c 0.22 0.385 0.33 0.77 0.33 1.155c 0 1.298 -1.012 2.156 -2.332 2.156Z "></path></symbol><symbol id="g11C1096A524ED08942C2BB5E0564A17C" overflow="visible"><path d="M 0 0m 0.858 -2.695c 0.66 0.506 1.21 1.254 1.661 2.255c 0.429 0.957 0.649 1.859 0.649 2.728v 0.924c 0 0.869 -0.22 1.771 -0.649 2.728c -0.451 1.001 -1.001 1.749 -1.661 2.255c -0.033 0.022 -0.066 0.033 -0.077 0.033c -0.099 0 -0.154 -0.055 -0.154 -0.154c 0 -0.044 0.022 -0.088 0.055 -0.121c 0.572 -0.44 1.034 -1.166 1.375 -2.167c 0.297 -0.869 0.451 -1.727 0.451 -2.574v -0.924c 0 -0.847 -0.154 -1.705 -0.451 -2.574c -0.341 -1.001 -0.803 -1.727 -1.375 -2.167c -0.033 -0.044 -0.055 -0.088 -0.055 -0.121c 0 -0.099 0.055 -0.154 0.154 -0.154c 0.011 0 0.044 0.011 0.077 0.033Z "></path></symbol></defs></svg></span>，这是最基础的 <code></code>line<code></code> 与 <code></code>content<code></code> 组合。</p>
+    <h3 id="三角函数单位圆">三角函数单位圆</h3>
+    <p>CeTZ 最经典的示例——单位圆上的正弦与余弦：</p>
+    <svg height="200.559696226pt" style="overflow: visible; width: 18.195199657em; height: 18.232699657em; display: block" viewBox="0 0 200.147196226 200.559696226" width="200.147196226pt" xmlns:h5="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <g>
+        <path d="M 0 0m 85.039370079 0c -46.92336378 0 -85.039370079 38.116006299 -85.039370079 85.039370079c 0 46.92336378 38.116006299 85.039370079 85.039370079 85.039370079c 46.92336378 0 85.039370079 -38.116006299 85.039370079 -85.039370079c 0 -46.92336378 -38.116006299 -85.039370079 -85.039370079 -85.039370079Z " fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(12.749227722 17.731728346)"></path>
+        <path d="M 0 0m 0 0h 184.238612925" fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(5.669291338 102.771098425)"></path>
+        <path d="M 0 0m 0 2.125984252l 5.669291339 -2.125984252v 4.251968504l -5.669291339 -2.125984252Z " fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-dasharray="" stroke-dashoffset="0" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(0 100.645114173)"></path>
+        <path d="M 0 0m 5.669291339 2.125984252l -5.669291339 2.125984252v -4.251968504l 5.669291339 2.125984252Z " fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-dasharray="" stroke-dashoffset="0" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(189.907904262 100.645114173)"></path>
+        <path d="M 0 0m 0 184.238612925v -184.238612925" fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(97.7885978 10.651791963)"></path>
+        <path d="M 0 0m 2.125984252 5.669291339l -2.125984252 -5.669291339h 4.251968504l -2.125984252 5.669291339Z " fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-dasharray="" stroke-dashoffset="0" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(95.662613548 194.890404887)"></path>
+        <path d="M 0 0m 2.125984252 0l 2.125984252 5.669291339h -4.251968504l 2.125984252 -5.669291339Z " fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-dasharray="" stroke-dashoffset="0" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(95.662613548 4.982500625)"></path>
+        <path d="M 0 0m 0 0h 6.292v 4.983h -6.292v -4.983Z " fill="none" transform="translate(193.855196226 108.783535433)"></path>
+        <g transform="translate(193.855196194 108.783535386)">
+          <g transform="matrix(1 0 0 -1 3.1e-8 4.862)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gA4AC33BF76001B15D203F6668E9483BD"></use>
+          </g>
+        </g>
+        <path d="M 0 0m 0 0h 5.698v 7.117h -5.698v -7.117Z " fill="none" transform="translate(86.435660792)"></path>
+        <g transform="translate(86.435660761 -7.9e-8)">
+          <g transform="matrix(1 0 0 -1 3.1e-8 4.862)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gC4346895D6C96E8B0D9A48E3FDBF3CF0"></use>
+          </g>
+        </g>
+        <path d="M 0 0m 0 69.660173845l 48.776578839 -69.660173845" fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(97.7885978 33.11092458)"></path>
+        <path d="M 0 0m 0 69.660173845v -69.660173845" fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(146.56517664 33.11092458)"></path>
+        <path d="M 0 0m 0 0h 48.776578839" fill="currentColor" fill-opacity="0.15" fill-rule="nonzero" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(97.7885978 102.771098425)"></path>
+        <path d="M 0 0h 26.490234375v 8.5765625h -26.490234375v -8.5765625Z " fill="none" transform="translate(95.88206329 92.813525837)"></path>
+        <g transform="translate(95.88206317 92.81352578)">
+          <g transform="matrix(1 0 0 -1 1.2e-7 6.6859375)">
+            <use fill="#b60157" fill-rule="nonzero" x="0" y="0" xlink:href="#gE9E22D1AEB8AAB4CB02AF82EE1CC7877"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="5.298046875" y="0" xlink:href="#gE9E22D1AEB8AAB4CB02AF82EE1CC7877"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="10.59609375" y="0" xlink:href="#g4F21559D411E52A0427C66D0631BE87E"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="15.894140625" y="0" xlink:href="#g4666C3926E6A15F65572DD76E569736D"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="21.1921875" y="0" xlink:href="#gB01FA705E47A1B592BDD7941016195A5"></use>
+          </g>
+        </g>
+        <path d="M 0 0m 0 0h 49.766234375v 10.956h -49.766234375v -10.956Z " fill="none" transform="translate(97.293770032 107.214358268)"></path>
+        <g transform="translate(97.293769992 107.214358173)">
+          <g transform="matrix(1 0 0 -1 4.1e-8 8.228)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gF1EDE55E4ED544DEE8828911822E2B7C"></use>
+            <use fill="currentColor" fill-rule="nonzero" x="4.884" y="0" xlink:href="#gF1018D9EAD0D6A7C348C4064F39364A9"></use>
+            <use fill="currentColor" fill-rule="nonzero" x="10.384" y="0" xlink:href="#g67E0717D063DE91831D2A23981510B8D"></use>
+          </g>
+          <g transform="matrix(1 0 0 -1 14.718000041 8.228)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gCBFDB4FAA60E8030E7B751E03D6CAAA6"></use>
+          </g>
+          <g transform="matrix(1 0 0 -1 18.997000041 8.228)">
+            <use fill="#b60157" fill-rule="nonzero" x="0" y="0" xlink:href="#gE9E22D1AEB8AAB4CB02AF82EE1CC7877"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="5.298046875" y="0" xlink:href="#gE9E22D1AEB8AAB4CB02AF82EE1CC7877"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="10.59609375" y="0" xlink:href="#g4F21559D411E52A0427C66D0631BE87E"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="15.894140625" y="0" xlink:href="#g4666C3926E6A15F65572DD76E569736D"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="21.1921875" y="0" xlink:href="#gB01FA705E47A1B592BDD7941016195A5"></use>
+          </g>
+          <g transform="matrix(1 0 0 -1 45.487234416 8.228)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g11C1096A524ED08942C2BB5E0564A17C"></use>
+          </g>
+        </g>
+        <path d="M 0 0m 0 0h 48.556234375v 10.956h -48.556234375v -10.956Z " fill="none" transform="translate(130.79099646 62.463011503)"></path>
+        <g transform="translate(130.790996403 62.463011408)">
+          <g transform="matrix(1 0 0 -1 5.7e-8 8.228)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g67E0717D063DE91831D2A23981510B8D"></use>
+            <use fill="currentColor" fill-rule="nonzero" x="4.334" y="0" xlink:href="#gF7A93543484FC37935C78A5D1F5B2EC6"></use>
+            <use fill="currentColor" fill-rule="nonzero" x="7.392" y="0" xlink:href="#g1F5BA2FCF70A524B9331BCB9F4C41951"></use>
+          </g>
+          <g transform="matrix(1 0 0 -1 13.508000057 8.228)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gCBFDB4FAA60E8030E7B751E03D6CAAA6"></use>
+          </g>
+          <g transform="matrix(1 0 0 -1 17.787000057 8.228)">
+            <use fill="#b60157" fill-rule="nonzero" x="0" y="0" xlink:href="#gE9E22D1AEB8AAB4CB02AF82EE1CC7877"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="5.298046875" y="0" xlink:href="#gE9E22D1AEB8AAB4CB02AF82EE1CC7877"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="10.59609375" y="0" xlink:href="#g4F21559D411E52A0427C66D0631BE87E"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="15.894140625" y="0" xlink:href="#g4666C3926E6A15F65572DD76E569736D"></use>
+            <use fill="#b60157" fill-rule="nonzero" x="21.1921875" y="0" xlink:href="#gB01FA705E47A1B592BDD7941016195A5"></use>
+          </g>
+          <g transform="matrix(1 0 0 -1 44.277234432 8.228)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g11C1096A524ED08942C2BB5E0564A17C"></use>
+          </g>
+        </g>
+        <path d="M 0 0m 0 0h 8.602v 7.513h -8.602v -7.513Z " fill="none" transform="translate(137.96317664 25.59792458)"></path>
+        <g transform="translate(137.963176561 25.597924501)">
+          <g transform="matrix(1 0 0 -1 7.9e-8 7.513)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gA0FB579194F343CD9FDF753DC465FC21"></use>
+          </g>
+        </g>
+      </g>
+      <defs>
+        <symbol id="gA4AC33BF76001B15D203F6668E9483BD" overflow="visible">
+          <path d="M 0 0m 5.797 4.103c 0 0.506 -0.495 0.759 -1.045 0.759c -0.473 0 -0.847 -0.253 -1.133 -0.759c -0.231 0.506 -0.616 0.759 -1.177 0.759c -0.539 0 -0.979 -0.253 -1.331 -0.748c -0.297 -0.429 -0.451 -0.748 -0.451 -0.957c 0 -0.099 0.055 -0.154 0.165 -0.154c 0.099 0 0.165 0.055 0.187 0.154c 0.209 0.638 0.671 1.386 1.408 1.386c 0.363 0 0.539 -0.231 0.539 -0.682c 0 -0.231 -0.198 -1.089 -0.583 -2.563c -0.187 -0.737 -0.517 -1.1 -0.99 -1.1c -0.154 0 -0.297 0.033 -0.418 0.088c 0.286 0.11 0.429 0.308 0.429 0.594c 0 0.286 -0.143 0.429 -0.44 0.429c -0.363 0 -0.638 -0.308 -0.638 -0.671c 0 -0.506 0.517 -0.759 1.056 -0.759c 0.462 0 0.836 0.253 1.133 0.759c 0.209 -0.506 0.605 -0.759 1.177 -0.759c 0.528 0 0.968 0.253 1.32 0.748c 0.297 0.429 0.451 0.748 0.451 0.957c 0 0.099 -0.055 0.154 -0.165 0.154c -0.099 0 -0.154 -0.055 -0.187 -0.154c -0.187 -0.627 -0.682 -1.386 -1.397 -1.386c -0.363 0 -0.55 0.22 -0.55 0.671c 0 0.143 0.055 0.451 0.176 0.946l 0.374 1.485c 0.209 0.825 0.55 1.243 1.034 1.243c 0.154 0 0.297 -0.033 0.418 -0.088c -0.297 -0.099 -0.44 -0.297 -0.44 -0.594c 0 -0.286 0.154 -0.429 0.451 -0.429c 0.352 0 0.627 0.319 0.627 0.671Z "></path>
+        </symbol>
+        <symbol id="gC4346895D6C96E8B0D9A48E3FDBF3CF0" overflow="visible">
+          <path d="M 0 0m 1.793 4.862c -0.495 0 -0.88 -0.275 -1.155 -0.825c -0.209 -0.429 -0.319 -0.726 -0.319 -0.891c 0 -0.099 0.055 -0.154 0.176 -0.154c 0.154 0 0.165 0.066 0.209 0.231c 0.253 0.869 0.605 1.309 1.056 1.309c 0.143 0 0.22 -0.099 0.22 -0.297c 0 -0.176 -0.055 -0.429 -0.176 -0.748c -0.418 -1.133 -0.627 -1.892 -0.627 -2.299c 0 -0.836 0.517 -1.331 1.364 -1.331c 0.363 0 0.704 0.132 1.012 0.396c -0.385 -1.452 -0.99 -2.178 -1.815 -2.178c -0.374 0 -0.627 0.121 -0.759 0.363c 0.44 0.022 0.66 0.231 0.66 0.627c 0 0.275 -0.143 0.418 -0.44 0.418c -0.407 0 -0.649 -0.341 -0.649 -0.748c 0 -0.605 0.55 -0.99 1.188 -0.99c 1.265 0 2.299 1.166 2.574 2.244l 1.034 4.158c 0.033 0.121 0.044 0.209 0.044 0.264c 0 0.22 -0.121 0.33 -0.352 0.33c -0.176 0 -0.319 -0.088 -0.418 -0.253c -0.066 -0.231 -0.121 -0.429 -0.154 -0.594l -0.704 -2.827c -0.11 -0.396 -0.693 -0.891 -1.188 -0.891c -0.418 0 -0.627 0.275 -0.627 0.836c 0 0.462 0.187 1.166 0.55 2.112c 0.143 0.385 0.22 0.649 0.22 0.803c 0 0.539 -0.385 0.935 -0.924 0.935Z "></path>
+        </symbol>
+        <symbol id="gE9E22D1AEB8AAB4CB02AF82EE1CC7877" overflow="visible">
+          <path d="M 0 0m 0.889453125 6.415234375h 3.2484375v -0.73046875h -2.4578125v -1.576953125q 0.184765625 0.06875 0.371679688 0.100976563q 0.186914063 0.032226563 0.375976563 0.032226563q 0.996875 0 1.58125 -0.588671875q 0.584375 -0.588671875 0.584375 -1.594140625q 0 -1.0140625 -0.612304688 -1.5984375q -0.612304688 -0.584375 -1.673632813 -0.584375q -0.511328125 0 -0.934570313 0.06875q -0.423242188 0.06875 -0.758398438 0.20625v 0.880859375q 0.3953125 -0.21484375 0.794921875 -0.320117188q 0.399609375 -0.105273438 0.81640625 -0.105273438q 0.717578125 0 1.106445313 0.378125q 0.388867188 0.378125 0.388867188 1.07421875q 0 0.6875 -0.401757813 1.069921875q -0.401757813 0.382421875 -1.119335938 0.382421875q -0.348046875 0 -0.67890625 -0.079492188q -0.330859375 -0.079492188 -0.631640625 -0.238476563v 3.22265625Z "></path>
+        </symbol>
+        <symbol id="g4F21559D411E52A0427C66D0631BE87E" overflow="visible">
+          <path d="M 0 0m 3.68671875 4.198046875v 2.487890625h 0.790625v -6.6859375h -0.790625v 0.605859375q -0.19765625 -0.356640625 -0.526367188 -0.543554688q -0.328710938 -0.186914063 -0.758398438 -0.186914063q -0.872265625 0 -1.372851563 0.676757813q -0.500585938 0.676757813 -0.500585938 1.866992188q 0 1.173046875 0.502734375 1.841210938q 0.502734375 0.668164063 1.370703125 0.668164063q 0.433984375 0 0.76484375 -0.186914063q 0.330859375 -0.186914063 0.519921875 -0.543554688Z m -2.324609375 -1.79609375q 0 -0.91953125 0.2921875 -1.387890625q 0.2921875 -0.468359375 0.863671875 -0.468359375q 0.571484375 0 0.870117188 0.47265625q 0.298632813 0.47265625 0.298632813 1.38359375q 0 0.915234375 -0.298632813 1.385742188q -0.298632813 0.470507813 -0.870117188 0.470507813q -0.571484375 0 -0.863671875 -0.468359375q -0.2921875 -0.468359375 -0.2921875 -1.387890625Z "></path>
+        </symbol>
+        <symbol id="g4666C3926E6A15F65572DD76E569736D" overflow="visible">
+          <path d="M 0 0m 4.778125 2.60390625v -0.38671875h -3.424609375v -0.02578125q 0 -0.786328125 0.410351563 -1.216015625q 0.410351563 -0.4296875 1.158007813 -0.4296875q 0.378125 0 0.790625 0.1203125q 0.4125 0.1203125 0.880859375 0.365234375v -0.786328125q -0.451171875 -0.184765625 -0.870117188 -0.277148438q -0.418945313 -0.092382813 -0.809960938 -0.092382813q -1.121484375 0 -1.753125 0.672460938q -0.631640625 0.672460938 -0.631640625 1.854101563q 0 1.1515625 0.61875 1.8390625q 0.61875 0.6875 1.65 0.6875q 0.91953125 0 1.450195313 -0.623046875q 0.530664063 -0.623046875 0.530664063 -1.7015625Z m -0.790625 0.23203125q -0.0171875 0.69609375 -0.328710938 1.059179688q -0.311523438 0.363085938 -0.895898438 0.363085938q -0.571484375 0 -0.941015625 -0.378125q -0.36953125 -0.378125 -0.43828125 -1.0484375l 2.60390625 0.004296875Z "></path>
+        </symbol>
+        <symbol id="gB01FA705E47A1B592BDD7941016195A5" overflow="visible">
+          <path d="M 0 0m 3.68671875 2.444921875q 0 0.889453125 -0.290039063 1.351367188q -0.290039063 0.461914063 -0.844335938 0.461914063q -0.580078125 0 -0.88515625 -0.461914063q -0.305078125 -0.461914063 -0.305078125 -1.351367188q 0 -0.889453125 0.307226563 -1.355664063q 0.307226563 -0.466210938 0.891601563 -0.466210938q 0.545703125 0 0.835742188 0.468359375q 0.290039063 0.468359375 0.290039063 1.353515625Z m 0.790625 -2.135546875q 0 -1.0828125 -0.511328125 -1.64140625q -0.511328125 -0.55859375 -1.50390625 -0.55859375q -0.3265625 0 -0.683203125 0.06015625q -0.356640625 0.06015625 -0.71328125 0.176171875v 0.78203125q 0.42109375 -0.19765625 0.76484375 -0.2921875q 0.34375 -0.09453125 0.631640625 -0.09453125q 0.640234375 0 0.932421875 0.348046875q 0.2921875 0.348046875 0.2921875 1.104296875v 0.034375v 0.537109375q -0.1890625 -0.40390625 -0.515625 -0.6015625q -0.3265625 -0.19765625 -0.794921875 -0.19765625q -0.8421875 0 -1.344921875 0.674609375q -0.502734375 0.674609375 -0.502734375 1.8046875q 0 1.134375 0.502734375 1.808984375q 0.502734375 0.674609375 1.344921875 0.674609375q 0.4640625 0 0.786328125 -0.184765625q 0.322265625 -0.184765625 0.52421875 -0.571484375v 0.623046875h 0.790625v -4.4859375Z "></path>
+        </symbol>
+        <symbol id="gF1EDE55E4ED544DEE8828911822E2B7C" overflow="visible">
+          <path d="M 0 0m 2.761 4.576c 0.462 0 0.814 -0.11 1.056 -0.33c -0.264 -0.033 -0.451 -0.275 -0.451 -0.528c 0 -0.363 0.176 -0.539 0.539 -0.539c 0.363 0 0.539 0.187 0.539 0.55c 0 0.781 -0.847 1.199 -1.694 1.199c -0.682 0 -1.243 -0.242 -1.694 -0.748c -0.451 -0.506 -0.682 -1.111 -0.682 -1.804c 0 -0.671 0.231 -1.265 0.682 -1.76c 0.451 -0.495 1.001 -0.737 1.672 -0.737c 0.55 0 0.979 0.154 1.287 0.473c 0.253 0.253 0.418 0.506 0.506 0.77c 0.033 0.099 0.044 0.165 0.044 0.209c 0 0.099 -0.066 0.143 -0.187 0.143c -0.088 0 -0.143 -0.044 -0.176 -0.132c -0.231 -0.737 -0.682 -1.111 -1.375 -1.111c -0.319 0 -0.627 0.143 -0.935 0.44c -0.363 0.341 -0.539 0.913 -0.539 1.727c 0 1.1 0.418 2.178 1.408 2.178Z "></path>
+        </symbol>
+        <symbol id="gF1018D9EAD0D6A7C348C4064F39364A9" overflow="visible">
+          <path d="M 0 0m 2.739 -0.121c 0.682 0 1.254 0.242 1.727 0.726c 0.473 0.484 0.715 1.067 0.715 1.749c 0 0.693 -0.231 1.298 -0.693 1.804c -0.462 0.506 -1.045 0.77 -1.738 0.77c -0.693 0 -1.265 -0.264 -1.738 -0.77c -0.473 -0.506 -0.704 -1.111 -0.704 -1.804c 0 -0.682 0.231 -1.265 0.704 -1.749c 0.473 -0.484 1.056 -0.726 1.727 -0.726Z m 0.011 0.352c -0.528 0 -0.924 0.231 -1.199 0.704c -0.176 0.308 -0.264 0.814 -0.264 1.507c 0 0.671 0.088 1.155 0.253 1.463c 0.264 0.473 0.66 0.704 1.199 0.704c 0.517 0 0.913 -0.231 1.188 -0.682c 0.187 -0.308 0.275 -0.803 0.275 -1.485c 0 -1.276 -0.374 -2.211 -1.452 -2.211Z "></path>
+        </symbol>
+        <symbol id="g67E0717D063DE91831D2A23981510B8D" overflow="visible">
+          <path d="M 0 0m 3.96 1.43c 0 0.836 -0.572 1.364 -1.705 1.584c -0.517 0.099 -0.847 0.22 -1.023 0.341c -0.176 0.121 -0.264 0.297 -0.264 0.506c 0 0.517 0.385 0.77 1.155 0.77c 0.748 0 1.155 -0.418 1.21 -1.265c 0.011 -0.088 0.066 -0.132 0.176 -0.132c 0.121 0 0.187 0.099 0.187 0.297v 1.089c 0 0.209 -0.055 0.308 -0.165 0.308c -0.121 0 -0.286 -0.198 -0.396 -0.286c -0.275 0.187 -0.616 0.286 -1.012 0.286c -0.979 0 -1.76 -0.44 -1.76 -1.375c 0 -0.374 0.154 -0.693 0.473 -0.946c 0.385 -0.319 0.748 -0.385 1.441 -0.506c 0.715 -0.143 1.078 -0.462 1.078 -0.957c 0 -0.627 -0.385 -0.946 -1.166 -0.946c -0.759 0 -1.243 0.506 -1.452 1.507c -0.033 0.143 -0.088 0.22 -0.187 0.22c -0.121 0 -0.187 -0.11 -0.187 -0.319v -1.419c 0 -0.209 0.055 -0.308 0.165 -0.308c 0.033 0 0.088 0.033 0.176 0.11c 0.198 0.176 0.11 0.143 0.308 0.341c 0.319 -0.297 0.715 -0.451 1.177 -0.451c 1.045 0 1.771 0.539 1.771 1.551Z "></path>
+        </symbol>
+        <symbol id="gCBFDB4FAA60E8030E7B751E03D6CAAA6" overflow="visible">
+          <path d="M 0 0m 3.498 -2.728c 0.099 0 0.154 0.055 0.154 0.154c 0 0.033 -0.022 0.077 -0.055 0.121c -0.572 0.44 -1.034 1.166 -1.375 2.167c -0.297 0.869 -0.451 1.727 -0.451 2.574v 0.924c 0 0.847 0.154 1.705 0.451 2.574c 0.341 1.001 0.803 1.727 1.375 2.167c 0.033 0.033 0.055 0.077 0.055 0.121c 0 0.099 -0.055 0.154 -0.154 0.154c -0.011 0 -0.044 -0.011 -0.077 -0.033c -0.66 -0.506 -1.21 -1.254 -1.661 -2.255c -0.429 -0.957 -0.649 -1.859 -0.649 -2.728v -0.924c 0 -0.869 0.22 -1.771 0.649 -2.728c 0.451 -1.001 1.001 -1.749 1.661 -2.255c 0.033 -0.022 0.066 -0.033 0.077 -0.033Z "></path>
+        </symbol>
+        <symbol id="g11C1096A524ED08942C2BB5E0564A17C" overflow="visible">
+          <path d="M 0 0m 0.858 -2.695c 0.66 0.506 1.21 1.254 1.661 2.255c 0.429 0.957 0.649 1.859 0.649 2.728v 0.924c 0 0.869 -0.22 1.771 -0.649 2.728c -0.451 1.001 -1.001 1.749 -1.661 2.255c -0.033 0.022 -0.066 0.033 -0.077 0.033c -0.099 0 -0.154 -0.055 -0.154 -0.154c 0 -0.044 0.022 -0.088 0.055 -0.121c 0.572 -0.44 1.034 -1.166 1.375 -2.167c 0.297 -0.869 0.451 -1.727 0.451 -2.574v -0.924c 0 -0.847 -0.154 -1.705 -0.451 -2.574c -0.341 -1.001 -0.803 -1.727 -1.375 -2.167c -0.033 -0.044 -0.055 -0.088 -0.055 -0.121c 0 -0.099 0.055 -0.154 0.154 -0.154c 0.011 0 0.044 0.011 0.077 0.033Z "></path>
+        </symbol>
+        <symbol id="gF7A93543484FC37935C78A5D1F5B2EC6" overflow="visible">
+          <path d="M 0 0m 2.134 6.611c 0 0.33 -0.275 0.616 -0.605 0.616c -0.33 0 -0.616 -0.286 -0.616 -0.616c 0 -0.33 0.275 -0.627 0.605 -0.627c 0.341 0 0.616 0.286 0.616 0.627Z m -0.561 -6.578l 1.144 -0.033v 0.429c -0.363 0 -0.583 0.022 -0.649 0.066c -0.066 0.044 -0.088 0.165 -0.088 0.363v 4.037l -1.573 -0.132v -0.418c 0.363 0 0.594 -0.033 0.671 -0.088c 0.077 -0.055 0.11 -0.209 0.11 -0.462v -2.926c 0 -0.209 -0.033 -0.341 -0.11 -0.385c -0.077 -0.044 -0.319 -0.055 -0.715 -0.055v -0.429Z "></path>
+        </symbol>
+        <symbol id="g1F5BA2FCF70A524B9331BCB9F4C41951" overflow="visible">
+          <path d="M 0 0m 3.454 4.543c 0.495 0 0.748 -0.385 0.748 -1.166v -2.508c 0 -0.209 -0.033 -0.341 -0.11 -0.385c -0.077 -0.044 -0.319 -0.066 -0.726 -0.066v -0.418l 1.265 0.033l 1.254 -0.033v 0.418c -0.352 0 -0.583 0.011 -0.693 0.044c -0.11 0.033 -0.154 0.11 -0.154 0.242v 2.057c 0 0.517 -0.011 0.88 -0.044 1.089c -0.11 0.671 -0.605 1.012 -1.474 1.012c -0.693 0 -1.21 -0.33 -1.551 -0.99v 0.99l -1.617 -0.121v -0.418c 0.396 0 0.638 -0.033 0.726 -0.099c 0.088 -0.066 0.121 -0.209 0.121 -0.462v -2.893c 0 -0.209 -0.044 -0.341 -0.121 -0.385c -0.077 -0.044 -0.319 -0.066 -0.726 -0.066v -0.418l 1.265 0.033l 1.254 -0.033v 0.418c -0.407 0 -0.638 0.022 -0.715 0.066c -0.077 0.044 -0.121 0.176 -0.121 0.385v 1.98c 0 0.891 0.561 1.694 1.419 1.694Z "></path>
+        </symbol>
+        <symbol id="gA0FB579194F343CD9FDF753DC465FC21" overflow="visible">
+          <path d="M 0 0m 6.105 7.513h -3.52c -0.253 0 -0.374 -0.011 -0.374 -0.253c 0 -0.121 0.121 -0.176 0.363 -0.176c 0.22 0 0.66 0.033 0.66 -0.143c 0 -0.022 -0.011 -0.088 -0.044 -0.198l -1.452 -5.841c -0.066 -0.242 -0.176 -0.385 -0.33 -0.44c -0.077 -0.022 -0.275 -0.033 -0.616 -0.033c -0.242 0 -0.352 -0.022 -0.352 -0.253c 0 -0.121 0.066 -0.176 0.209 -0.176l 1.375 0.033l 0.704 -0.011c 0.121 0 0.561 -0.022 0.704 -0.022c 0.176 0 0.264 0.088 0.264 0.264c 0 0.11 -0.121 0.165 -0.352 0.165c -0.44 0 -0.66 0.044 -0.66 0.143c 0 0 0.011 0.033 0.033 0.176l 0.66 2.684h 1.815c 0.715 0 1.397 0.22 2.035 0.649c 0.715 0.473 1.067 1.056 1.067 1.749c 0 1.089 -1.034 1.683 -2.189 1.683Z m -0.341 -0.429c 0.957 0 1.43 -0.33 1.43 -0.99c 0 -0.616 -0.308 -1.441 -0.627 -1.727c -0.418 -0.374 -0.968 -0.561 -1.65 -0.561h -1.474l 0.726 2.904c 0.088 0.374 0.088 0.374 0.55 0.374Z "></path>
+        </symbol>
+      </defs>
+    </svg>
+    <h3 id="流程图">流程图</h3>
+    <p>用 <code></code>cetz.tree<code></code> 画一棵简单的决策树：</p>
+    <svg height="102.047244094pt" style="overflow: visible; width: 12.225376521em; height: 9.27702219em; display: block" viewBox="0 0 134.479141732 102.047244094" width="134.479141732pt" xmlns:h5="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <g>
+        <path d="M 0 0m 28.67590073 0l -28.67590073 39.813244465" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(29.453400463 28.239130107)"></path>
+        <path d="M 0 0m 0 5.842775062l 1.588286149 -5.842775062l 3.450192497 2.485036798l -5.038478646 3.357738264Z " fill="none" stroke="currentColor" stroke-dasharray="" stroke-dashoffset="0" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(26.140018064 66.809856173)"></path>
+        <path d="M 0 0m 0 0l 29.095719619 39.935669038" fill="none" stroke="currentColor" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(76.418538122 28.189249658)"></path>
+        <path d="M 0 0m 5.056691139 5.83403814l -5.056691139 -3.330247446l 3.436607095 -2.503790693l 1.620084044 5.83403814Z " fill="none" stroke="currentColor" stroke-dasharray="" stroke-dashoffset="0" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(103.795954194 66.87302335)"></path>
+        <path d="M 0 0m 15.590551181 0c -8.602616693 0 -15.590551181 6.987934488 -15.590551181 15.590551181c 0 8.602616693 6.987934488 15.590551181 15.590551181 15.590551181c 8.602616693 0 15.590551181 -6.987934488 15.590551181 -15.590551181c 0 -8.602616693 -6.987934488 -15.590551181 -15.590551181 -15.590551181Z " fill="#ffffff" fill-rule="nonzero" stroke="#aaaaaa" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(51.649019685)"></path>
+        <path d="M 0 0m 0 0h 22v 8.987h -22v -8.987Z " fill="none" transform="translate(56.239570866 11.097051181)"></path>
+        <g transform="translate(56.23957074 11.097051165)">
+          <g transform="matrix(1 0 0 -1 0 8.063)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g640093B1AA7A489842BD0F24F30BC133"></use>
+            <use fill="currentColor" fill-rule="nonzero" x="11" y="0" xlink:href="#g79510CC2A43A122F74734764E563FC43"></use>
+          </g>
+        </g>
+        <path d="M 0 0m 15.590551181 0c -8.602616693 0 -15.590551181 6.987934488 -15.590551181 15.590551181c 0 8.602616693 6.987934488 15.590551181 15.590551181 15.590551181c 8.602616693 0 15.590551181 -6.987934488 15.590551181 -15.590551181c 0 -8.602616693 -6.987934488 -15.590551181 -15.590551181 -15.590551181Z " fill="#ffffff" fill-rule="nonzero" stroke="#aaaaaa" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(0.606948819 70.866141732)"></path>
+        <path d="M 0 0h 32.395v 8.91h -32.395v -8.91Z " fill="none" transform="translate(0 82.001692913)"></path>
+        <g transform="translate(-1.26e-7 82.001692913)">
+          <g transform="matrix(1 0 0 -1 0 8.063)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gD0B0A84AF5A1C9DC035A9BD9CFB9A131"></use>
+            <use fill="currentColor" fill-rule="nonzero" x="11" y="0" xlink:href="#g581FBCE210F98BC22CE1A1536F3EFF6B"></use>
+          </g>
+          <g transform="matrix(1 0 0 -1 22 8.063)"></g>
+          <g transform="matrix(1 0 0 -1 24.75 8.063)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g84F48CC5C28ECD53CE9DCB7E35F9E04A"></use>
+          </g>
+        </g>
+        <path d="M 0 0m 15.590551181 0c -8.602616693 0 -15.590551181 6.987934488 -15.590551181 15.590551181c 0 8.602616693 6.987934488 15.590551181 15.590551181 15.590551181c 8.602616693 0 15.590551181 -6.987934488 15.590551181 -15.590551181c 0 -8.602616693 -6.987934488 -15.590551181 -15.590551181 -15.590551181Z " fill="#ffffff" fill-rule="nonzero" stroke="#aaaaaa" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" stroke-width="1" transform="translate(103.279590551 70.866141732)"></path>
+        <path d="M 0 0h 31.218v 8.91h -31.218v -8.91Z " fill="none" transform="translate(103.261141732 82.001692913)"></path>
+        <g transform="translate(103.261141685 82.001692913)">
+          <g transform="matrix(1 0 0 -1 0 8.063)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gD0B0A84AF5A1C9DC035A9BD9CFB9A131"></use>
+            <use fill="currentColor" fill-rule="nonzero" x="11" y="0" xlink:href="#g581FBCE210F98BC22CE1A1536F3EFF6B"></use>
+          </g>
+          <g transform="matrix(1 0 0 -1 22 8.063)"></g>
+          <g transform="matrix(1 0 0 -1 24.75 8.063)">
+            <use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gF110087D0967D51B93062FFC3887FC46"></use>
+          </g>
+        </g>
+      </g>
+      <defs>
+        <symbol id="g640093B1AA7A489842BD0F24F30BC133" overflow="visible">
+          <path d="M 0 0m 7.139 7.733v -3.135h -3.08v 0.473v 2.662Z m -6.567 -3.135v -0.792h 2.596c -0.154 -1.507 -0.715 -2.981 -2.574 -4.114c 0.22 -0.143 0.517 -0.418 0.66 -0.616c 2.035 1.287 2.607 3.003 2.761 4.73h 3.124v -4.697h 0.847v 4.697h 2.453v 0.792h -2.453v 3.135h 2.112v 0.792h -9.119v -0.792h 2.244v -2.662l -0.011 -0.473Z "></path>
+        </symbol>
+        <symbol id="g79510CC2A43A122F74734764E563FC43" overflow="visible">
+          <path d="M 0 0m 5.082 3.597v -4.477h 0.759v 0.484h 3.322v -0.462h 0.792v 4.455Z m 0.759 -3.256v 2.508h 3.322v -2.508Z m -1.122 4.136c 0.319 0.132 0.792 0.176 4.884 0.495c 0.143 -0.286 0.264 -0.55 0.352 -0.781l 0.704 0.363c -0.341 0.847 -1.111 2.134 -1.859 3.091l -0.66 -0.319c 0.374 -0.484 0.748 -1.067 1.078 -1.639l -3.509 -0.22c 0.726 0.99 1.452 2.266 2.046 3.542l -0.858 0.242c -0.55 -1.397 -1.452 -2.871 -1.749 -3.267c -0.275 -0.396 -0.495 -0.66 -0.704 -0.704c 0.099 -0.22 0.231 -0.627 0.275 -0.803Z m -2.497 1.738h 1.254c -0.132 -1.408 -0.385 -2.596 -0.759 -3.564c -0.374 0.297 -0.759 0.594 -1.133 0.858c 0.209 0.781 0.44 1.738 0.638 2.706Z m -1.507 -3.003c 0.55 -0.374 1.133 -0.836 1.672 -1.298c -0.506 -0.99 -1.155 -1.694 -1.947 -2.123c 0.176 -0.154 0.396 -0.451 0.506 -0.649c 0.836 0.517 1.507 1.232 2.035 2.222c 0.418 -0.407 0.781 -0.792 1.023 -1.133l 0.506 0.671c -0.275 0.363 -0.693 0.792 -1.177 1.221c 0.506 1.232 0.814 2.805 0.946 4.807l -0.484 0.077l -0.132 -0.022h -1.287c 0.143 0.748 0.264 1.485 0.352 2.156l -0.77 0.055c -0.077 -0.682 -0.187 -1.441 -0.33 -2.211h -1.155v -0.77h 1.001c -0.231 -1.133 -0.506 -2.222 -0.759 -3.003Z "></path>
+        </symbol>
+        <symbol id="gD0B0A84AF5A1C9DC035A9BD9CFB9A131" overflow="visible">
+          <path d="M 0 0m 3.201 4.62c -0.517 -0.902 -1.397 -1.793 -2.222 -2.376c 0.187 -0.143 0.484 -0.462 0.616 -0.627c 0.847 0.682 1.793 1.716 2.398 2.739Z m -0.891 3.762v -2.497h -1.65v -0.792h 4.455v -3.487h 0.792c -1.386 -0.825 -3.168 -1.342 -5.346 -1.639c 0.176 -0.22 0.352 -0.55 0.429 -0.792c 4.213 0.649 7.018 2.123 8.459 4.983l -0.781 0.363c -0.605 -1.21 -1.496 -2.156 -2.684 -2.871v 3.443h 4.323v 0.792h -4.246v 1.408h 3.245v 0.77h -3.245v 1.177h -0.869v -3.355h -2.046v 2.497Z "></path>
+        </symbol>
+        <symbol id="g581FBCE210F98BC22CE1A1536F3EFF6B" overflow="visible">
+          <path d="M 0 0m 5.995 3.014c -0.429 -0.451 -1.133 -0.88 -1.782 -1.188c 0.154 -0.11 0.396 -0.374 0.506 -0.484c 0.649 0.352 1.43 0.913 1.925 1.452Z m -5.698 -1.276l 0.176 -0.693c 0.737 0.198 1.617 0.44 2.486 0.682l -0.066 0.638c -0.968 -0.253 -1.914 -0.484 -2.596 -0.627Z m 9.196 1.485c -0.418 -0.352 -1.089 -0.825 -1.661 -1.155c -0.11 0.121 -0.198 0.253 -0.275 0.385v 1.067c 0.781 0.088 1.518 0.209 2.123 0.352l -0.627 0.539c -1.034 -0.253 -2.882 -0.462 -4.477 -0.561c 0.088 -0.165 0.176 -0.407 0.198 -0.572c 0.66 0.033 1.353 0.088 2.046 0.154v -1.958l -0.594 0.176c -0.473 -0.605 -1.309 -1.166 -2.112 -1.54c 0.154 -0.11 0.407 -0.363 0.528 -0.495c 0.759 0.407 1.628 1.034 2.178 1.727v -2.189h 0.737v 2.343c 0.627 -0.748 1.474 -1.364 2.376 -1.705c 0.099 0.187 0.308 0.451 0.473 0.594c -0.814 0.242 -1.595 0.693 -2.189 1.265c 0.583 0.308 1.254 0.726 1.804 1.122Z m -1.914 4.059c 0.33 -0.33 0.682 -0.715 1.012 -1.111c -0.33 -0.473 -0.726 -0.858 -1.133 -1.111l -0.022 0.55l -0.363 -0.044v 2.618h 0.374v 0.616h -3.322v -0.616h 0.495v -2.937l -0.594 -0.066l 0.143 -0.627l 2.277 0.341v -0.627h 0.627v 0.715l 0.363 0.066l -0.044 -0.033c 0.143 -0.132 0.319 -0.374 0.407 -0.539c 0.451 0.286 0.869 0.682 1.232 1.177c 0.33 -0.396 0.616 -0.781 0.814 -1.078l 0.495 0.44c -0.22 0.33 -0.561 0.748 -0.946 1.199c 0.385 0.66 0.682 1.452 0.858 2.354l -0.407 0.121l -0.121 -0.022l -0.132 -0.011h -1.848v -0.638h 1.716c -0.132 -0.462 -0.308 -0.902 -0.528 -1.287c -0.297 0.33 -0.594 0.649 -0.88 0.935Z m -2.343 0.902h 1.21v -0.55h -1.21Z m 0 -1.056h 1.21v -0.583h -1.21Z m 0 -1.089h 1.21v -0.561l -1.21 -0.154Z m -4.092 1.144c -0.066 -1.188 -0.22 -2.827 -0.363 -3.795h 2.563c -0.143 -2.288 -0.319 -3.201 -0.539 -3.421c -0.088 -0.11 -0.198 -0.132 -0.341 -0.132c -0.187 0 -0.583 0.011 -1.023 0.044c 0.121 -0.187 0.209 -0.484 0.22 -0.693c 0.418 -0.022 0.847 -0.022 1.089 0c 0.297 0.022 0.495 0.088 0.671 0.308c 0.319 0.363 0.495 1.397 0.671 4.213c 0.011 0.11 0.011 0.352 0.011 0.352h -0.77c 0.143 1.232 0.297 3.19 0.385 4.664h -3.091v -0.715h 2.343c -0.077 -1.32 -0.22 -2.882 -0.352 -3.949h -1.045c 0.099 0.924 0.198 2.123 0.264 3.08Z "></path>
+        </symbol>
+        <symbol id="g84F48CC5C28ECD53CE9DCB7E35F9E04A" overflow="visible">
+          <path d="M 0 0m 1.705 0.869l 0.605 1.595c 0.055 0.143 0.121 0.187 0.385 0.187h 2.321l 0.638 -1.859c 0.132 -0.374 -0.286 -0.418 -0.814 -0.451c -0.066 -0.066 -0.066 -0.297 0 -0.363c 0.407 0.011 1.012 0.022 1.441 0.022c 0.451 0 0.869 -0.011 1.254 -0.022c 0.066 0.066 0.066 0.297 0 0.363c -0.429 0.044 -0.803 0.077 -0.99 0.605l -2.266 6.292c -0.165 -0.099 -0.462 -0.22 -0.605 -0.22l -2.497 -5.896c -0.286 -0.682 -0.616 -0.748 -1.1 -0.781c -0.066 -0.066 -0.066 -0.297 0 -0.363c 0.286 0.011 0.649 0.022 0.979 0.022c 0.451 0 1.001 -0.011 1.408 -0.022c 0.066 0.066 0.066 0.297 0 0.363c -0.418 0.033 -0.935 0.077 -0.759 0.528Z m 1.188 2.244c -0.242 0 -0.319 0.033 -0.275 0.143l 1.122 2.849h 0.066l 1.034 -2.992Z "></path>
+        </symbol>
+        <symbol id="gF110087D0967D51B93062FFC3887FC46" overflow="visible">
+          <path d="M 0 0m 1.628 7.095c -0.396 0 -0.99 0.011 -1.419 0.022c -0.066 -0.066 -0.066 -0.297 0 -0.363c 0.77 -0.033 0.957 -0.088 0.957 -1.001v -4.411c 0 -0.913 -0.187 -0.968 -0.957 -1.001c -0.066 -0.066 -0.066 -0.297 0 -0.363c 0.429 0.011 1.023 0.022 1.43 0.022c 0.396 0 0.682 -0.022 1.606 -0.022c 2.189 0 2.772 1.1 2.772 2.046c 0 1.056 -0.737 1.661 -1.694 1.936v 0.022c 0.55 0.275 1.045 0.847 1.045 1.441c 0 0.737 -0.319 1.694 -2.365 1.694c -0.385 0 -0.979 -0.022 -1.375 -0.022Z m 0.473 -3.443h 0.759c 1.507 0 2.134 -0.847 2.134 -1.837c 0 -0.803 -0.308 -1.474 -1.98 -1.474c -0.77 0 -0.913 0.286 -0.913 0.957Z m 0 2.398c 0 0.583 0 0.693 0.957 0.693c 0.616 0 1.419 -0.33 1.419 -1.452c 0 -0.935 -0.649 -1.265 -1.562 -1.265h -0.814Z "></path>
+        </symbol>
+      </defs>
+    </svg>
+    <h2 id="小结">小结</h2>
+    <ul>
+      <li>在文章里写 <code>#import "@preview/cetz:0.5.2"</code> 并导入 <code>assets/preview.typ</code> 的 <code>fig</code> 即可使用；</li>
+      <li>插图要用 <code>#fig(cetz.canvas({ ... }))</code> 包一层：站点构建时 CeTZ 的矢量内容 以 SVG 形式内联到页面，VS Code 预览与 PDF 导出则原生渲染，一份源码两边通用；</li>
+      <li>CeTZ 自带的 WebAssembly 内核（贝塞尔、布尔运算等）也能正常加载，无需额外配置。</li>
+    </ul>
+  
+
+<nav class="post-nav"><a class="prev" href="/posts/electricity-field-circuit/">← 电场与恒定电流：看不见的力与走不丢的流</a><a class="next" href="/posts/s3-08-vibration-wave/">振动与波：简谐运动、机械波与干涉衍射 →</a></nav></article>
+</main>
+<footer class="site-footer">
+  <div class="footer-brand">知止的物理世界</div>
+  <div class="footer-meta">由 Typall 驱动的静态发布 · 数据在 Typst 中书写，设计在 <span class="accent-dot">CSS</span> 中呼吸</div>
+</footer>
+</body>
+</html>

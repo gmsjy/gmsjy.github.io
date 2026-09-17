@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>搜索 · 知止的物理世界</title>
+<meta name="description" content="一个用 Typst 驱动的静态博客">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="canonical" href="https://gmsjy.github.io/search/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="搜索">
+<meta property="og:description" content="一个用 Typst 驱动的静态博客">
+<meta property="og:url" content="https://gmsjy.github.io/search/">
+<meta name="twitter:card" content="summary">
+
+
+</head>
+<body>
+<a class="skip-link" href="#content">跳到正文</a>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="/">知止的物理世界</a>
+    <nav class="site-nav" aria-label="主导航">
+      <a href="/">首页</a>
+      <a href="/series/">专栏</a><a href="/tags/">标签</a><a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+    </nav>
+  </div>
+</header>
+<main id="content">
+<h1>搜索</h1>
+<input type="search" id="search-input" class="search-input" placeholder="输入关键词，即时检索…" autocomplete="off">
+<p class="search-hint">匹配范围：标题 / 标签 / 摘要 / 正文全文</p>
+<ul id="search-results" class="post-list"></ul>
+<script>
+(() => {
+  const input = document.getElementById('search-input');
+  const results = document.getElementById('search-results');
+  let index = [];
+  fetch('/search.json').then(r => r.json()).then(d => { index = d; }).catch(() => {
+    results.innerHTML = '<li class="post-item">索引加载失败（请先运行 typall build）</li>';
+  });
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const match = (q) => {
+    const ql = q.toLowerCase();
+    const out = [];
+    for (const it of index) {
+      const hay = (it.title + ' ' + it.tags.join(' ') + ' ' + it.excerpt + ' ' + it.text).toLowerCase();
+      if (hay.includes(ql)) {
+        out.push(`<li class="post-item"><a href="${esc(it.url)}"><div class="post-title">${esc(it.title)}</div>` +
+          (it.date ? `<div class="post-date">${esc(it.date)}</div>` : '') +
+          `<p class="post-excerpt">${esc(it.excerpt)}</p></a></li>`);
+      }
+    }
+    return out;
+  };
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (!q) { results.innerHTML = ''; return; }
+    const hits = match(q);
+    results.innerHTML = hits.length
+      ? hits.slice(0, 50).join('\n')
+      : '<li class="post-item">未找到匹配文章</li>';
+  });
+})();
+</script>
+</main>
+<footer class="site-footer">
+  <div class="footer-brand">知止的物理世界</div>
+  <div class="footer-meta">由 Typall 驱动的静态发布 · 数据在 Typst 中书写，设计在 <span class="accent-dot">CSS</span> 中呼吸</div>
+</footer>
+</body>
+</html>

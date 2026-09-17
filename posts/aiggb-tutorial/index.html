@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AiGGB 使用教程：一句话生成 GeoGebra 教学动图 · 知止的物理世界</title>
+<meta name="description" content="一个用 Typst 驱动的静态博客">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="canonical" href="https://gmsjy.github.io/posts/aiggb-tutorial/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AiGGB 使用教程：一句话生成 GeoGebra 教学动图">
+<meta property="og:description" content="静态插图讲不清「过程」：单摆怎么摆、斜抛怎么飞、参数滑动时图像如何变形——这些恰恰是数理教学里最需要动的部分。AiGGB（开源，MIT 协议）解决的就是这件事：用自然语言描述，AI 直接在 GeoGebra 画布上生成可拖动、可播放的教学动图，甚至可以把题目拍照发给它，读题、建模、作图一条龙。本篇是从安装到上手的完整教程。 五分钟跑起来 安装与启动 AiGGB 是纯前端项目（React +…">
+<meta property="og:url" content="https://gmsjy.github.io/posts/aiggb-tutorial/"><meta property="og:image" content="https://gmsjy.github.io/og/posts-aiggb-tutorial.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context": "https://schema.org","@type": "BlogPosting","headline": "AiGGB 使用教程：一句话生成 GeoGebra 教学动图","url": "https://gmsjy.github.io/posts/aiggb-tutorial/","author": {"@type": "Person", "name": "gmsjy"},"description": "静态插图讲不清「过程」：单摆怎么摆、斜抛怎么飞、参数滑动时图像如何变形——这些恰恰是数理教学里最需要动的部分。AiGGB（开源，MIT 协议）解决的就是这件事：用自然语言描述，AI 直接在 GeoGebra 画布上生成可拖动、可播放的教学动图，甚至可以把题目拍照发给它，读题、建模、作图一条龙。本篇是从安装到上手的完整教程。 五分钟跑起来 安装与启动 AiGGB 是纯前端项目（React +…","datePublished": "2026-09-05","image": "https://gmsjy.github.io/og/posts-aiggb-tutorial.png"}</script>
+
+
+</head>
+<body>
+<a class="skip-link" href="#content">跳到正文</a>
+<header class="site-header">
+  <div class="inner">
+    <a class="site-title" href="/">知止的物理世界</a>
+    <nav class="site-nav" aria-label="主导航">
+      <a href="/">首页</a>
+      <a href="/series/">专栏</a><a href="/tags/">标签</a><a href="/archive/">归档</a>
+      <a href="/search/">搜索</a>
+    </nav>
+  </div>
+</header>
+<main id="content">
+<article><h1>AiGGB 使用教程：一句话生成 GeoGebra 教学动图</h1><div class="meta"><span>2026-09-05</span> <a class="tag" href="/tags/工具/">工具</a><a class="tag" href="/tags/GeoGebra/">GeoGebra</a><a class="tag" href="/tags/AI/">AI</a><a class="tag" href="/tags/教程/">教程</a></div><nav class="toc"><details><summary>目录</summary><ul class="toc-list"><li class="toc-l2"><a href="#五分钟跑起来">五分钟跑起来</a></li><li class="toc-l3"><a href="#安装与启动">安装与启动</a></li><li class="toc-l3"><a href="#配置模型-API">配置模型 API</a></li><li class="toc-l2"><a href="#两种运行模式">两种运行模式</a></li><li class="toc-l2"><a href="#拍题出动图-把题目截图变成动图">拍题出动图：把题目截图变成动图</a></li><li class="toc-l3"><a href="#三种加图方式">三种加图方式</a></li><li class="toc-l3"><a href="#前置配置-视觉模型">前置配置：视觉模型</a></li><li class="toc-l3"><a href="#完整流程">完整流程</a></li><li class="toc-l2"><a href="#提示词怎么写-说清三要素">提示词怎么写：说清三要素</a></li><li class="toc-l2"><a href="#平面与-3D-模式">平面与 3D 模式</a></li><li class="toc-l2"><a href="#工具箱-会话与导出">工具箱、会话与导出</a></li><li class="toc-l2"><a href="#和本站结合-给每篇笔记配一幅动图">和本站结合：给每篇笔记配一幅动图</a></li><li class="toc-l2"><a href="#使用边界">使用边界</a></li><li class="toc-l2"><a href="#上手清单">上手清单</a></li></ul></details></nav>
+    <p>静态插图讲不清「过程」：单摆怎么摆、斜抛怎么飞、参数滑动时图像如何变形——这些恰恰是数理教学里最需要<strong>动</strong>的部分。<a href="https://github.com/gmsjy/aiggb">AiGGB</a>（开源，MIT 协议）解决的就是这件事：<strong>用自然语言描述，AI 直接在 GeoGebra 画布上生成可拖动、可播放的教学动图</strong>，甚至可以把题目拍照发给它，读题、建模、作图一条龙。本篇是从安装到上手的完整教程。</p>
+    <h2 id="五分钟跑起来">五分钟跑起来</h2>
+    <h3 id="安装与启动">安装与启动</h3>
+    <p>AiGGB 是纯前端项目（React + Vite），不需要后端，本地起一个开发服务器即可：</p>
+    <pre><code data-lang="bash"><span style="color: var(--tok-4b69c6, #4b69c6)"">git</span> clone https://github.com/gmsjy/aiggb
+<span style="color: var(--tok-4b69c6, #4b69c6)"">cd</span> aiggb
+<span style="color: var(--tok-4b69c6, #4b69c6)"">npm</span> install
+<span style="color: var(--tok-4b69c6, #4b69c6)"">npm</span> run dev        <span style="color: var(--tok-74747c, #74747c)"">#</span><span style="color: var(--tok-74747c, #74747c)""> 浏览器打开 http://localhost:5173</span></code></pre>
+    <h3 id="配置模型-API">配置模型 API</h3>
+    <p>首次启动会自动弹出 API 设置面板。它接受<strong>任何 OpenAI 兼容接口</strong>，预置了 6 个服务商。国内使用推荐 DeepSeek（直连、快、便宜）：</p>
+    <table>
+      <tbody><tr>
+        <td><strong>设置项</strong></td>
+        <td><strong>推荐值</strong></td>
+      </tr>
+      <tr>
+        <td>Provider</td>
+        <td><code>DeepSeek</code></td>
+      </tr>
+      <tr>
+        <td>主力模型</td>
+        <td><code>deepseek-v4-pro</code>（复杂动图 / 3D）或 <code>deepseek-v4-flash</code>（日常）</td>
+      </tr>
+      <tr>
+        <td>轻量模型（精炼 / 评估）</td>
+        <td><code>deepseek-v4-flash</code></td>
+      </tr>
+      <tr>
+        <td>视觉模型（题目识别）</td>
+        <td><code>deepseek-v4-flash-vision-exp</code></td>
+      </tr>
+      <tr>
+        <td>API Key</td>
+        <td>从 platform.deepseek.com 获取，形如 <code>sk-...</code></td>
+      </tr>
+    </tbody></table>
+    <p>填好后点「测试连接」，通过即保存。Moonshot（Kimi）、智谱 GLM、SiliconFlow、OpenAI、本地 Ollama 都在预置列表里，切换 Provider 改个 Key 就行。</p>
+    <blockquote><p>记忆点：API Key <strong>明文存在浏览器 localStorage</strong> 里——公共电脑不要用，随时可在设置面板清除。所有会话数据与 Key 是分开存储的，「清除全部会话」不会动到凭据。</p></blockquote><h2 id="两种运行模式">两种运行模式</h2>
+    <p>设置面板里可以切换执行模式，面向使用者的区别一句话讲清：</p>
+    <ul>
+      <li><strong>两阶段管线</strong>（默认）：AI 先把你的意图「精炼」成一份分节绘图规格，弹出<strong>规格确认气泡</strong>（可编辑、可重新生成），确认后再编译成 GeoGebra 命令逐条执行，最后自动做一次<strong>满足度评估</strong>——不满意会追加一轮修复。适合「一句话出图」的常规场景；</li>
+      <li><strong>Agent 模式</strong>：AI 作为工具调用代理，逐步操作 23 个工具（建点、造滑块、执行命令、查询对象……），<strong>每一步都拿到执行反馈再决定下一步</strong>。负半径、min 大于 max、依赖对象缺失这类错误会在调用画布前被语义预检拦截并喂回 AI 自行修正；连续 3 轮执行失败自动熔断。适合复杂构造、多对象联动的场景。</li>
+    </ul>
+    <p>带图片输入的轮次固定走 Agent 构造，与模式开关无关。</p>
+    <h2 id="拍题出动图-把题目截图变成动图">拍题出动图：把题目截图变成动图</h2>
+    <p>这是 AiGGB 最适合教学者的功能：把高中数理题<strong>拍照或截图</strong>发给它，AI 读题后自动设计并构造动图。</p>
+    <h3 id="三种加图方式">三种加图方式</h3>
+    <ul>
+      <li>点输入框左侧的「附件」按钮选择图片（可多选）；</li>
+      <li><code>Ctrl+V</code> 直接粘贴剪贴板截图；</li>
+      <li>把图片文件拖拽到输入区。</li>
+    </ul>
+    <p>每条消息最多 3 张（同一题的多张图会合并解读），上传前自动等比压缩到最长边 1280px。</p>
+    <h3 id="前置配置-视觉模型">前置配置：视觉模型</h3>
+    <p>题目识别由<strong>视觉模型</strong>完成（设置 → 高级 → 角色专用模型），需要选一个支持图片输入的模型：DeepSeek 选 <code>deepseek-v4-flash-vision-exp</code>，智谱选 <code>glm-4.5v</code>，SiliconFlow 选 <code>Qwen2.5-VL-72B</code>，OpenAI 选 <code>gpt-4o</code>，本地 Ollama 选 <code>qwen2.5vl:7b</code>。留空则跟随主力模型（此时主力必须本身多模态）。</p>
+    <h3 id="完整流程">完整流程</h3>
+    <ol>
+      <li>附加题目图片，可附一句补充（如「画出运动过程」）；</li>
+      <li>视觉模型识别后弹出<strong>题目确认气泡</strong>：题干转写、已知量、求解目标、图示信息、动画建议——识别有误直接<strong>编辑题干</strong>改正（比重新识别快），图片不清点「重新识别」；</li>
+      <li>确认后 AI 以 Agent 工具循环逐步构造，右侧脚本面板可实时观察；</li>
+      <li>构造完成时自动做<strong>画布状态核对</strong>：画布与题目解读逐项对照，发现偏差自动回喂修正（最多 2 轮）；</li>
+      <li>结束后附一份<strong>满足度评估报告</strong>。</li>
+    </ol>
+    <p>降级边界：识别失败但消息里有文字，直接按文字构造；纯图片识别失败会提示去配置视觉模型；3D 题目要先手动切到 3D 模式再发送。</p>
+    <h2 id="提示词怎么写-说清三要素">提示词怎么写：说清三要素</h2>
+    <p>AiGGB 把自然语言转译成 GeoGebra 命令——描述越精确，结果越接近预期。每个请求说清三件事：<strong>画什么、参数怎么调、要不要动起来</strong>。</p>
+    <div>
+      <p><strong>对照示例</strong>：</p>
+      <pre><code data-lang="text">模糊：画个圆                       明确：画以原点为圆心、半径为 3 的圆
+模糊：画个运动的点                 明确：点 P 在单位圆上匀速旋转，角速度用滑块控制
+模糊：画个函数                     明确：画 y = sin(kx)，k 用滑块从 1 调到 5</code></pre>
+      <p>确实缺核心参数（如画圆没给半径）AI 会反问；能合理默认的不会追问——圆心默认原点，角速度默认 1 rad/s。</p>
+    </div>
+    <p>让图像<strong>动起来</strong>靠四个关键词：<code>自动播放</code>、<code>留轨迹</code>、<code>滑块可调</code>、<code>动画</code>。想控制某个量可调，直接给范围与默认值：</p>
+    <pre><code data-lang="text">单摆 L = 1 m，初角 30 度，小角近似，摆动留轨迹，右侧同步画摆角-时间曲线
+振幅 A 滑块 0.5 到 3，默认 1
+斜抛 v0 = 20 m/s，仰角 45 度，t 自动播放</code></pre>
+    <p>多轮对话里 AI 记得住已创建的对象名，可以持续修改：「把圆改成蓝色虚线」→「加一条从圆心 O 到 P 的半径，染绿」→「P 的轨迹关掉，速度改成 2 倍」。注意修改指令依赖上一轮<strong>成功创建</strong>的对象——上轮失败了，修改也会失败。</p>
+    <blockquote><p>记忆点：两类常见踩坑——<code>v</code> 在 GeoGebra 里是矢量类型，不能当标量滑块（改说「速度大小用滑块默认 5」）；大写单字母 <code>A</code> 默认是点类型，当振幅名会跟坐标点冲突（改用 <code>Amp</code> 或加「振幅」前缀描述）。</p></blockquote><h2 id="平面与-3D-模式">平面与 3D 模式</h2>
+    <p>默认在二维平面作图。工具栏可切换到 3D 画布，切换会<strong>清空当前画布与聊天历史</strong>（两者是不同的 GeoGebra 引擎）。在平面模式描述「正方体」，AI 只能画投影；切到 3D 再发同一句话，才是真三维：</p>
+    <pre><code data-lang="text">正方体边长 3，平面 ACF 截正方体，截面红色高亮
+球体半径 3，用平面 z = 1.5 截球，截面橙色高亮
+空间向量 u=(2,0,0)、v=(1,2,0)，叉乘 w = u x v 用蓝色画出</code></pre>
+    <h2 id="工具箱-会话与导出">工具箱、会话与导出</h2>
+    <table>
+      <tbody><tr>
+        <td><strong>功能</strong></td>
+        <td><strong>说明</strong></td>
+      </tr>
+      <tr>
+        <td>数学 / 物理域</td>
+        <td>切换 AI 的行为偏好：物理模式自动启用力矢量叠加、<span data-equation="inline"><svg height="7.513pt" style="overflow: visible; width: 3.113555556em; height: 0.683em;" viewBox="0 0 34.249111111 7.513" width="34.249111111pt" xmlns:h5="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g transform="matrix(1 0 0 -1 0 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g91C9E26AA50206E7D4B057869560567E"></use></g><g transform="matrix(1 0 0 -1 8.577555556 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g4409E2CB062F4B2A6E5513C033F25B3C"></use></g><g transform="matrix(1 0 0 -1 20.191111111 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gA22B31529741E8678957AE18B36D082F"></use></g><g transform="matrix(1 0 0 -1 25.691111111 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#g1F4E5D3D42AC9A300E88B8C6DDEDA935"></use></g><g transform="matrix(1 0 0 -1 28.749111111 7.513)"><use fill="currentColor" fill-rule="nonzero" x="0" y="0" xlink:href="#gD42E3B394D6850BF8C4865F4AE3B1088"></use></g><defs><symbol id="g91C9E26AA50206E7D4B057869560567E" overflow="visible"><path d="M 0 0m 0.165 -1.551c 0 -0.473 0.495 -0.704 1.485 -0.704c 0.517 0 1.001 0.132 1.43 0.385c 0.484 0.286 0.781 0.671 0.902 1.144l 1.199 4.829c 0.022 0.11 0.033 0.176 0.033 0.209c 0 0.22 -0.121 0.33 -0.352 0.33c -0.242 0 -0.396 -0.132 -0.473 -0.385c -0.242 0.407 -0.572 0.605 -0.979 0.605c -0.704 0 -1.331 -0.352 -1.87 -1.056c -0.495 -0.66 -0.748 -1.353 -0.748 -2.068c 0 -0.957 0.561 -1.771 1.485 -1.771c 0.429 0 0.825 0.187 1.188 0.55l -0.33 -1.298c -0.319 -0.759 -0.814 -1.144 -1.507 -1.144c -0.286 0 -0.528 0.022 -0.726 0.066c 0.231 0.121 0.341 0.308 0.341 0.561c 0 0.275 -0.154 0.418 -0.451 0.418c -0.352 0 -0.627 -0.319 -0.627 -0.671Z m 3.751 5.863c 0.22 -0.231 0.33 -0.451 0.33 -0.671c 0 -0.011 -0.011 -0.066 -0.033 -0.143l -0.517 -2.079c -0.066 -0.253 -0.253 -0.517 -0.55 -0.759c -0.297 -0.242 -0.583 -0.363 -0.836 -0.363c -0.44 0 -0.66 0.319 -0.66 0.957c 0 0.605 0.374 1.947 0.594 2.343c 0.341 0.627 0.726 0.935 1.177 0.935c 0.198 0 0.363 -0.077 0.495 -0.22Z "></path></symbol><symbol id="g4409E2CB062F4B2A6E5513C033F25B3C" overflow="visible"><path d="M 0 0m 7.678 4.037h -6.798c -0.176 0 -0.264 -0.088 -0.264 -0.253c 0 -0.165 0.088 -0.253 0.264 -0.253h 6.798c 0.176 0 0.264 0.088 0.264 0.253c 0 0.132 -0.121 0.253 -0.264 0.253Z m 0 -2.068h -6.798c -0.176 0 -0.264 -0.088 -0.264 -0.253c 0 -0.165 0.088 -0.253 0.264 -0.253h 6.798c 0.176 0 0.264 0.088 0.264 0.253c 0 0.143 -0.121 0.253 -0.264 0.253Z "></path></symbol><symbol id="gA22B31529741E8678957AE18B36D082F" overflow="visible"><path d="M 0 0m 1.276 1.54c -0.363 0 -0.539 -0.187 -0.539 -0.561c 0 -0.825 0.671 -1.221 1.54 -1.221c 0.88 0 1.584 0.44 2.101 1.331c 0.429 0.737 0.649 1.584 0.649 2.53c 0 1.397 -0.253 2.387 -0.759 2.97c -0.429 0.495 -0.924 0.737 -1.485 0.737c -0.649 0 -1.188 -0.231 -1.617 -0.704c -0.473 -0.495 -0.704 -1.089 -0.704 -1.782c 0 -0.671 0.198 -1.243 0.594 -1.716c 0.418 -0.506 0.957 -0.759 1.606 -0.759c 0.572 0 1.012 0.308 1.309 0.924v -0.143c 0 -1.199 -0.209 -2.013 -0.638 -2.453c -0.341 -0.363 -0.704 -0.539 -1.067 -0.539c -0.44 0 -0.759 0.099 -0.968 0.308c 0.341 0 0.517 0.198 0.517 0.539c 0 0.308 -0.231 0.539 -0.539 0.539Z m 1.397 1.166c -0.429 0 -0.748 0.22 -0.968 0.66c -0.121 0.253 -0.187 0.748 -0.187 1.463c 0 0.715 0.077 1.199 0.22 1.474c 0.242 0.44 0.594 0.66 1.045 0.66c 0.451 0 0.781 -0.275 0.99 -0.825c 0.121 -0.297 0.198 -0.803 0.198 -1.518c 0 -0.957 -0.429 -1.914 -1.298 -1.914Z "></path></symbol><symbol id="g1F4E5D3D42AC9A300E88B8C6DDEDA935" overflow="visible"><path d="M 0 0m 2.112 0.583c 0 0.319 -0.264 0.583 -0.583 0.583c -0.319 0 -0.583 -0.264 -0.583 -0.583c 0 -0.319 0.264 -0.583 0.583 -0.583c 0.319 0 0.583 0.264 0.583 0.583Z "></path></symbol><symbol id="gD42E3B394D6850BF8C4865F4AE3B1088" overflow="visible"><path d="M 0 0m 2.75 7.326c -0.539 0 -1.012 -0.176 -1.408 -0.528c -0.396 -0.352 -0.594 -0.792 -0.594 -1.331c 0 -0.451 0.165 -0.858 0.495 -1.221c 0.077 -0.088 0.319 -0.275 0.726 -0.561c -1.001 -0.517 -1.507 -1.188 -1.507 -2.002c 0 -0.583 0.242 -1.056 0.715 -1.419c 0.44 -0.341 0.957 -0.506 1.562 -0.506c 0.616 0 1.155 0.198 1.606 0.594c 0.451 0.396 0.682 0.913 0.682 1.518c 0 0.506 -0.176 0.957 -0.539 1.364c -0.132 0.143 -0.473 0.396 -1.012 0.737c 0.847 0.451 1.265 1.023 1.265 1.694c 0 1.001 -0.957 1.661 -1.991 1.661Z m 1.419 -1.661c 0 -0.572 -0.341 -1.067 -1.023 -1.474l -1.309 0.858c -0.341 0.22 -0.517 0.506 -0.517 0.847c 0 0.66 0.715 1.067 1.419 1.067c 0.759 0 1.43 -0.539 1.43 -1.298Z m -1.419 -5.511c -0.902 0 -1.661 0.649 -1.661 1.529c 0 0.737 0.407 1.331 1.221 1.782l 1.298 -0.825c 0.528 -0.341 0.792 -0.726 0.792 -1.166c 0 -0.792 -0.825 -1.32 -1.65 -1.32Z "></path></symbol></defs></svg></span> 等常量、带单位坐标轴</td>
+      </tr>
+      <tr>
+        <td>模板库</td>
+        <td>数学 / 物理 / 3D 各 4 个场景模板，点卡片即出图，不想写提示词就从这里开始</td>
+      </tr>
+      <tr>
+        <td>会话</td>
+        <td>每轮对话自动保存（含画布快照），刷新不丢；最多 30 个会话，可新建 / 切换 / 重命名</td>
+      </tr>
+      <tr>
+        <td>撤销</td>
+        <td>撤销上一轮 AI 产生的全部命令</td>
+      </tr>
+      <tr>
+        <td>导出 .ggb</td>
+        <td>下载 GeoGebra 原生文件——可在桌面版 GeoGebra 打开继续编辑</td>
+      </tr>
+      <tr>
+        <td>截图</td>
+        <td>导出 PNG，直接插进课件或笔记</td>
+      </tr>
+      <tr>
+        <td>token 统计</td>
+        <td>顶栏实时显示会话累计用量，设置面板有历史图表</td>
+      </tr>
+    </tbody></table>
+    <p>课堂演示的实际工作流通常是：模板或一句话出图 → 多轮微调 → 导出 <code>.ggb</code> 留档 + 截图进课件。AiGGB 支持安装为 PWA（Chrome / Edge 地址栏安装图标，iOS 走「添加到主屏幕」），安装后界面可离线打开，AI 调用仍需在线。</p>
+    <h2 id="和本站结合-给每篇笔记配一幅动图">和本站结合：给每篇笔记配一幅动图</h2>
+    <p>本站的高中数理笔记几乎每一课都有适合做成动图的对象。三条现成的提示词，直接对应站内文章：</p>
+    <pre><code data-lang="text">对应《三角函数》：单位圆上点 P 逆时针匀速旋转，画出 P 的纵坐标随角度变化的
+正弦曲线生成过程，角速度用滑块控制，留轨迹
+
+对应《机械振动与机械波》：单摆 L = 1 m 初角 30 度，小角近似，摆球留轨迹，
+右侧同步画摆角随时间的曲线，周期 T 自动播放
+
+对应《抛体运动》：斜抛 v0 = 20 m/s 仰角 45 度，显示速度矢量分解与轨迹，
+t 自动播放，可调仰角滑块 15 到 75 度观察射程变化</code></pre>
+    <p>生成后用「截图」把关键帧存下来贴进笔记，「导出 .ggb」的文件则留给课堂上的实时演示——静态图讲结构，动图讲过程，两者正好互补。</p>
+    <h2 id="使用边界">使用边界</h2>
+    <ul>
+      <li><strong>Key 安全第一</strong>：浏览器明文存储，公共环境不用、用完即清；</li>
+      <li><strong>2D / 3D 切换即清空</strong>：动手前先想好这题是平面还是立体；</li>
+      <li><strong>思考深度保持默认</strong>：实测开启「高」档在轻量模型上更慢且无质量收益，除非刻意做难题否则别开；</li>
+      <li><strong>复杂构造交给 Agent</strong>：一句话出图用两阶段管线，多对象联动、需要中途调整的场景切 Agent 模式。</li>
+    </ul>
+    <h2 id="上手清单">上手清单</h2>
+    <ul>
+      <li><strong>装好即配</strong>：启动后第一件事是填 API Key 并「测试连接」，顺手把视觉模型也选上；</li>
+      <li><strong>先模板后自由</strong>：不熟悉提示词语感时，从模板库卡片入手，观察它生成时用的措辞；</li>
+      <li><strong>三要素自查</strong>：发送前问一遍——对象明确吗？参数给范围了吗？提动画了吗？</li>
+      <li><strong>迭代优于重写</strong>：图不对就多轮修改（「改成红色虚线」「半径改成 5」），不必推倒重来；</li>
+      <li><strong>重要结果随手导出</strong>：<code>.ggb</code> 留档、PNG 进笔记，会话有 30 个上限会被淘汰。</li>
+    </ul>
+    <p>一句话收束：AiGGB 把「做教学动图」的成本从「会 GeoGebra 命令」降到「会把题意说清楚」——工具已经把排版、纠错、自检都自动化了，留给使用者的只剩一件事：像给学生讲题一样，把图<strong>描述</strong>出来。</p>
+  
+
+<nav class="series-nav"><a class="series-home" href="/series/教学工具/">专栏：教学工具</a><span class="series-pos">1 / 1</span><div class="series-links"></div></nav><nav class="post-nav"><a class="prev" href="/posts/alternating-current/">← 交变电流：正弦规律、四值与变压器</a><a class="next" href="/posts/s3-11-strong-math/">强基数学：微积分、线性代数与数论组合 →</a></nav></article>
+</main>
+<footer class="site-footer">
+  <div class="footer-brand">知止的物理世界</div>
+  <div class="footer-meta">由 Typall 驱动的静态发布 · 数据在 Typst 中书写，设计在 <span class="accent-dot">CSS</span> 中呼吸</div>
+</footer>
+</body>
+</html>
