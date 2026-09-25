@@ -23,6 +23,9 @@ strategy = "git"               # git | copy | netlify | vercel
 
 [deploy.git]
 repo = "https://github.com/gmsjy/gmsjy.github.io.git"
-branch = "main"                # 用户主站仓库，Pages 从 main 根路径服务
+# 禁止指向 main：main 是源码分支，Pages 实际走 GitHub Actions 模式
+# （.github/workflows/deploy.yml 构建部署）。曾把构建产物推上 main
+# 清空过远端源码（deploy-20260918-011504），故产物只落独立分支。
+branch = "built-site"
 commit_message = "Update blog at {timestamp}"
 auto_push = true
