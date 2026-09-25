@@ -5,6 +5,7 @@ mod cache;
 mod compile;
 mod config;
 mod content;
+mod copy_theme;
 mod deploy;
 mod feed;
 mod import_md;

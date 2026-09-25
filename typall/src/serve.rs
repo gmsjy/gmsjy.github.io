@@ -67,6 +67,8 @@ const LIVE_RELOAD_SCRIPT: &str = r#"<script>
       var t=document.querySelector('title'),nt=doc.querySelector('title');
       if(t&&nt){t.textContent=nt.textContent}
       v=ver;
+      // 通知「复制排版主题」脚本：正文节点已换新，若处于主题预览态需重新套用
+      try{document.dispatchEvent(new CustomEvent('typall:content-refresh'))}catch(e){}
     }).catch(function(){
       if(retried){fullReload();return}
       setTimeout(function(){softRefresh(ver,true)},400);
@@ -98,27 +100,51 @@ const LIVE_RELOAD_SCRIPT: &str = r#"<script>
 })();
 </script>"#;
 
-/// 「复制到公众号」浮动按钮 + 剪贴板脚本（仅 serve 时注入，build 产物零 JS）。
+/// 「复制到公众号 / 知乎」浮动按钮 + 排版主题选择器 + 剪贴板脚本
+/// （仅 serve 时注入，build 产物零 JS）。
 ///
-/// 复制时实时抓取 `<article>` DOM 的克隆副本处理：
-///   1. 把公式/插图 `<svg>` 里的 `<defs><symbol id>` + `<use xlink:href>` 结构
-///      **use/symbol 展开**成纯 `<path>`（删光 id/defs/xlink）——绕开公众号保存层
-///      删 id/defs 导致公式空白的问题，同时保留矢量。
+/// **复制排版主题**（`src/copy_theme.rs` 内置 5 套，`__COPY_THEMES_JSON__`
+/// 注入时替换为 JSON）：
+/// - 浮动栏下拉切换主题；选中后把该主题的内联样式**直接套到当前正文**上
+///   （所见即所得——页面呈现的就是粘贴进平台的效果），选回「站点样式」还原；
+/// - 选择存 localStorage，刷新/重开自动恢复；软刷新换入新正文后自动重套
+///   （监听 Live Reload 脚本派发的 `typall:content-refresh` 事件）；
+/// - 两个复制按钮都按当前主题出稿；「站点样式」档位下按默认主题（墨理蓝）
+///   出稿，与历史写死行为一致。
+///
+/// 复制时实时处理 `<article>` 的**克隆副本**（预览态套用的样式也不受影响，
+/// 永远从干净副本出稿，不同主题反复切换不会叠加）：
+///   1. 公式/插图 `<svg>` 的 `<defs><symbol id>` + `<use xlink:href>` 结构
+///      **use/symbol 展开**成纯 `<path>`（删光 id/defs/xlink）——绕开公众号
+///      保存层删 id/defs 导致公式空白的问题，同时保留矢量。
 ///   2. 普通 `<img src="相对路径">` 转绝对 URL（依赖 site.url 正确解析页面 URL）。
-///   3. 双格式写入剪贴板（text/html + text/plain），公众号编辑器吃 HTML 富文本。
-///      操作的是 cloneNode 副本，不污染页面原 DOM。
+///   3. 按主题把逐元素内联 style 写进正文（公众号剥类名与外链 CSS，只认内联）；
+///      块级公式的 flex 预览布局改为「公式居中 + 编号右对齐独立行」。
+///   4. 双格式写入剪贴板（text/html + text/plain），平台编辑器吃 HTML 富文本。
 const COPY_SCRIPT: &str = r#"<style>
-.copy-float{position:fixed;right:16px;top:40%;z-index:9999;display:flex;flex-direction:column;gap:8px}
-.copy-float button{font:14px/1.4 system-ui,sans-serif;padding:8px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);transition:.15s}
+.copy-float{position:fixed;right:16px;top:40%;z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.copy-float button,.copy-float select{font:14px/1.4 system-ui,sans-serif;padding:8px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);transition:.15s}
+.copy-float select{max-width:132px;padding:7px 8px}
 .copy-float button:hover{border-color:#07c160;color:#07c160}
 .copy-float button.done{border-color:#07c160;background:#07c160;color:#fff}
-@media (max-width:640px){.copy-float{right:8px;top:auto;bottom:12px;flex-direction:row}}
+@media (max-width:640px){.copy-float{right:8px;top:auto;bottom:12px;flex-direction:row;align-items:center}}
 </style>
 <script>
 (function(){
+  var THEMES=__COPY_THEMES_JSON__;
   if(!document.querySelector('article')){return}
+  var SITE='__site__';
+  var LS='typallCopyTheme';
+  function themeById(id){
+    for(var i=0;i<THEMES.length;i++){if(THEMES[i].id===id)return THEMES[i]}
+    return null
+  }
+  // 当前档位：默认「站点样式」（预览原样），localStorage 记住上次选择
+  var cur=SITE;
+  try{var saved=localStorage.getItem(LS);if(saved&&themeById(saved)){cur=saved}}catch(e){}
+
   function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-  // use/symbol 展开：返回处理后的 svg，页面 DOM 不变
+  // use/symbol 展开：返回处理后的 svg，传入的 DOM 不变
   function expandSvg(orig){
     var svg=orig.cloneNode(true), ns='http://www.w3.org/2000/svg';
     var symbols={};
@@ -150,7 +176,6 @@ const COPY_SCRIPT: &str = r#"<style>
       inherit(use,g);
       use.parentNode.replaceChild(g,use)
     });
-    // svg 自身若有 data-equation 包裹的编号 span（eq-num），由外层容器统一处理
     return svg
   }
   // 图片相对路径转绝对 URL
@@ -162,114 +187,134 @@ const COPY_SCRIPT: &str = r#"<style>
       }
     })
   }
-  // —— 公众号只认内联 style：以下把预览页外部 css 的正文排版写成元素内联 style，
-  //    色值固定为浅色主题（公众号无暗色），字号统一 px，避免 rem/em 依赖根字号失效。
-  //    色值与 src/theme.rs 的「墨理」主题对齐（媒体内 CSS-inliner 仅取亮色令牌）。
-  var C_FG='#20222a', C_MUT='#686a72', C_ACC='#0b6fc0', C_BRD='#e6e2d6',
-      C_CODE='#f3f1ec', C_CRD='#ffffff', C_QUOTE='#3c5a49', C_QUOTE_SOFT='#eef2ec';
-  var FONT='font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;';
-  var MONO='font-family:"SFMono-Regular",Consolas,"DejaVu Sans Mono",monospace;';
-  function styleOf(el,css){ // 合并进已有 style，不覆盖 svg/现有内联
+  // —— 主题应用：styles 槽位（标签名 / article / codeInline / codeInPre /
+  //    eqBlock / eqSvg / eqNum）→ 元素内联 style。合并进已有 style，不覆盖 svg。
+  function styleOf(el,css){
     var pre=el.getAttribute('style'); el.setAttribute('style',(pre?pre.replace(/;?$/,';'):'')+css)
   }
-  function tagStyle(el){
-    var t=el.tagName.toLowerCase(), css='';
-    if(t==='h1')css='font-size:28px;font-weight:bold;line-height:1.3;margin:34px 0 16px;'+FONT+'color:'+C_FG+';';
-    else if(t==='h2')css='font-size:22px;font-weight:bold;line-height:1.3;margin:34px 0 14px;padding-bottom:6px;border-bottom:1px solid '+C_BRD+';'+FONT+'color:'+C_FG+';';
-    else if(t==='h3'||t==='h4')css='font-size:'+(t==='h3'?'19':'17')+'px;font-weight:bold;line-height:1.3;margin:26px 0 10px;'+FONT+'color:'+C_FG+';';
-    else if(t==='p')css='font-size:16px;line-height:1.8;margin:14px 0;'+FONT+'color:'+C_FG+';';
-    else if(t==='blockquote')css='font-size:16px;line-height:1.8;margin:18px 0;padding:8px 18px;border-left:3px solid '+C_QUOTE+';background:'+C_QUOTE_SOFT+';color:'+C_MUT+';'+FONT+';';
-    else if(t==='pre')css='background:'+C_CODE+';padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:14px;line-height:1.6;color:'+C_FG+';'+MONO+';';
-    else if(t==='ul'||t==='ol')css='margin:14px 0;padding-left:26px;line-height:1.8;'+FONT+'color:'+C_FG+';';
-    else if(t==='li')css='margin:4px 0;';
-    else if(t==='table')css='border-collapse:collapse;width:100%;margin:16px 0;';
-    else if(t==='th'||t==='td')css='border:1px solid '+C_BRD+';padding:8px 12px;text-align:left;font-size:15px;line-height:1.6;'+FONT+';';
-    else if(t==='hr')css='border:none;border-top:1px solid '+C_BRD+';margin:26px 0;';
-    else if(t==='a')css='color:'+C_ACC+';';
-    else if(t==='img')css='max-width:100%;height:auto;border-radius:6px;';
-    if(css)styleOf(el,css)
+  function applyStyles(root,S){
+    ['h1','h2','h3','h4','p','blockquote','pre','ul','ol','li','table','th','td','hr','a','img','strong','em','del','svg'].forEach(function(t){
+      if(!S[t]){return}
+      Array.prototype.forEach.call(root.querySelectorAll(t),function(el){styleOf(el,S[t])})
+    });
+    if(S.article){styleOf(root,S.article)}
+    // 行内 code 与 pre 内 code 的衬底/字体（公众号保留 font-family）
+    Array.prototype.forEach.call(root.querySelectorAll('code'),function(el){
+      if(el.closest('pre')){if(S.codeInPre)styleOf(el,S.codeInPre)}
+      else if(S.codeInline){styleOf(el,S.codeInline)}
+    });
+    // 块级公式：flex/绝对定位(预览用)公众号不支持 → 「公式居中 + 编号单独右对齐行」。
+    // 容器 text-align:center 使行内 svg 居中；eq-num 变 display:block 落到公式下一行靠右。
+    Array.prototype.forEach.call(root.querySelectorAll('div[data-equation="block"]'),function(d){
+      if(S.eqBlock)styleOf(d,S.eqBlock);
+      Array.prototype.forEach.call(d.querySelectorAll(':scope > svg'),function(sv){
+        var st=sv.getAttribute('style')||'';
+        sv.setAttribute('style',st.replace(/display\s*:\s*block\s*;?/i,'')+(S.eqSvg||''))
+      });
+      Array.prototype.forEach.call(d.querySelectorAll(':scope > .eq-num'),function(sp){
+        if(S.eqNum)styleOf(sp,S.eqNum)
+      })
+    });
   }
-  // 处理整篇 article → 返回清理后适合公众号粘贴的 HTML 字符串
-  function buildWechatHtml(){
-    var art=document.querySelector('article').cloneNode(true);
-    // 站点导航/装饰元素不入剪贴板（h1+正文 + 底部说明保留）
-    Array.prototype.forEach.call(art.querySelectorAll('nav.toc,.prev,.next,.meta,.toc,link,script,style'),function(e){e.remove()});
-    // ① use/symbol 展开（SVG 保矢量；依赖 id/defs 的引用实体化）
+  // 站点导航/装饰元素不入剪贴板（复制时剥离；预览态保留以便站内跳转）
+  function stripChrome(root){
+    Array.prototype.forEach.call(root.querySelectorAll('nav.toc,.prev,.next,.meta,.toc,link,script,style'),function(e){e.remove()})
+  }
+  // 干净副本：永远从服务器原始 DOM 克隆，主题反复切换/复制不叠加样式
+  var pristine=null;
+  function capture(){var a=document.querySelector('article');if(a){pristine=a.cloneNode(true)}}
+  // 从干净副本构建主题化正文（strip=true 时剥离站内导航，复制用）
+  function buildStyled(theme,strip){
+    var art=pristine.cloneNode(true);
+    if(strip){stripChrome(art)}
+    // use/symbol 展开（SVG 保矢量；依赖 id/defs 的引用实体化）
     Array.prototype.forEach.call(art.querySelectorAll('svg'),function(s){
       var ex=expandSvg(s); s.parentNode.replaceChild(ex,s)
     });
-    // ② 图片相对路径转绝对
     absolutize(art);
-    // ③ 正文层级样式内联（浅色写死），article 也套基准字体，防微信剥容器
-    styleOf(art,FONT+'font-size:16px;line-height:1.8;color:'+C_FG+';');
-    ['h1','h2','h3','h4','p','blockquote','pre','ul','ol','li','table','th','td','hr','a','img'].forEach(function(t){
-      Array.prototype.forEach.call(art.querySelectorAll(t),tagStyle)
-    });
-    // 行内 code 与 pre 内 code 的衬底/字体（公众号保留 font-family）
-    Array.prototype.forEach.call(art.querySelectorAll('code'),function(el){
-      if(el.closest('pre'))styleOf(el,MONO+'font-size:0.9em;')
-      else styleOf(el,'background:'+C_CODE+';padding:1px 6px;border-radius:4px;'+MONO+';font-size:0.9em;')
-    });
-    // ④ block 公式：flex/绝对定位(预览用)公众号不支持 → 改「公式居中 + 编号单独右对齐行」。
-    //    容器 text-align:center 使行内 svg 居中；eq-num 变 display:block 落到公式下一行靠右。
-    Array.prototype.forEach.call(art.querySelectorAll('div[data-equation="block"]'),function(d){
-      styleOf(d,'text-align:center;margin:18px 0;');
-      Array.prototype.forEach.call(d.querySelectorAll(':scope > svg'),function(sv){
-        var st=sv.getAttribute('style')||'';
-        sv.setAttribute('style',st.replace(/display\s*:\s*block\s*;?/i,'')+';vertical-align:middle;');
-      });
-      Array.prototype.forEach.call(d.querySelectorAll(':scope > .eq-num'),function(sp){
-        styleOf(sp,'display:block;text-align:right;margin:5px 0 0;font-size:15px;color:'+C_MUT+';'+FONT)
-      })
-    });
+    applyStyles(art,theme.styles);
+    return art
+  }
+  // 当前出稿主题：「站点样式」档位下按默认主题（与历史写死行为一致）
+  function currentTheme(){return cur===SITE?THEMES[0]:themeById(cur)}
+  // 所见即所得：把主题样式直接套到页面正文；「站点样式」档位还原原始 DOM
+  function applyPreview(){
+    var live=document.querySelector('article');
+    if(!live||!pristine){return}
+    if(cur===SITE){
+      live.parentNode.replaceChild(pristine.cloneNode(true),live)
+    }else{
+      live.parentNode.replaceChild(buildStyled(themeById(cur),false),live)
+    }
+  }
+  capture();
+  // Live Reload 软刷新换入新正文后：重新捕获干净副本并重套当前主题
+  document.addEventListener('typall:content-refresh',function(){
+    capture();
+    if(cur!==SITE){applyPreview()}
+  });
+  if(cur!==SITE){applyPreview()}
+  // 复制：按当前主题出稿（公众号 / 知乎共用管线；知乎编辑器较宽容，
+  // 多余的内联样式会被其清洗，带上无副作用）
+  function buildCopyHtml(){
+    var art=buildStyled(currentTheme(),true);
     return art.outerHTML
   }
-  function writeClip(feedback){
+  function writeClip(done){
     try{
-      var html=buildWechatHtml();
+      var html=buildCopyHtml();
       var plain=esc(html).replace(/\n\s*\n/g,'\n'); // text/plain 降级
       var item=new ClipboardItem({
         'text/html':new Blob([html],{type:'text/html'}),
         'text/plain':new Blob([plain],{type:'text/plain'})
       });
-      navigator.clipboard.write([item]).then(function(){feedback(true)},function(){feedback(false)})
+      navigator.clipboard.write([item]).then(function(){done(true)},function(){done(false)})
     }catch(e){
       // 兜底：execCommand + 临时选中
       try{
-        var ta=document.createElement('textarea');ta.value=buildWechatHtml();
+        var ta=document.createElement('textarea');ta.value=buildCopyHtml();
         ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);
-        ta.select();var ok=document.execCommand('copy');ta.remove();feedback(ok)
-      }catch(e2){feedback(false)}
+        ta.select();var ok=document.execCommand('copy');ta.remove();done(ok)
+      }catch(e2){done(false)}
     }
   }
   var bar=document.createElement('div');bar.className='copy-float';
-  var btn=document.createElement('button');btn.textContent='复制到公众号';
-  btn.title='复制正文 HTML 到剪贴板，粘贴进微信公众号编辑器';
-  bar.appendChild(btn);document.body.appendChild(bar);
-  // 复制到知乎：直接复制 article 富文本（知乎编辑器宽容，无需内联样式/图片栅格化）
-  var btn2=document.createElement('button');btn2.textContent='复制到知乎';
-  btn2.onclick=function(){
-    var art=document.querySelector('article');
-    if(!art){btn2.textContent='无正文';return}
-    var item=new ClipboardItem({
-      'text/html':new Blob([art.outerHTML],{type:'text/html'}),
-      'text/plain':new Blob([art.textContent],{type:'text/plain'})
-    });
-    navigator.clipboard.write([item]).then(function(){
-      btn2.textContent='✅ 已复制';
-      setTimeout(function(){btn2.textContent='复制到知乎'},1800);
-    },function(){btn2.textContent='❌ 失败'});
+  // 排版主题选择器：选中即所见即所得套用到正文
+  var sel=document.createElement('select');
+  sel.title='复制排版主题：选中后正文即时套用该风格，复制按此主题出稿';
+  var optSite=document.createElement('option');
+  optSite.value=SITE;optSite.textContent='站点样式';sel.appendChild(optSite);
+  THEMES.forEach(function(t){
+    var o=document.createElement('option');o.value=t.id;o.textContent=t.label;sel.appendChild(o)
+  });
+  sel.value=cur;
+  sel.onchange=function(){
+    cur=sel.value;
+    try{localStorage.setItem(LS,cur)}catch(e){}
+    applyPreview()
   };
-  bar.appendChild(btn2);
-  var timer=null;
+  bar.appendChild(sel);
+  var btn=document.createElement('button');btn.textContent='复制到公众号';
+  btn.title='按当前主题复制正文富文本，粘贴进微信公众号编辑器';
   btn.addEventListener('click',function(){
     writeClip(function(ok){
       btn.textContent=ok?'✅ 已复制':'❌ 复制失败';
-      btn.classList.add('done');
-      if(timer){clearTimeout(timer)}
-      timer=setTimeout(function(){btn.textContent='复制到公众号';btn.classList.remove('done')},1800)
+      btn.classList.toggle('done',ok);
+      setTimeout(function(){btn.textContent='复制到公众号';btn.classList.remove('done')},1800)
     })
-  })
+  });
+  bar.appendChild(btn);
+  var btn2=document.createElement('button');btn2.textContent='复制到知乎';
+  btn2.title='按当前主题复制正文富文本，粘贴进知乎文章编辑器';
+  btn2.addEventListener('click',function(){
+    writeClip(function(ok){
+      btn2.textContent=ok?'✅ 已复制':'❌ 复制失败';
+      btn2.classList.toggle('done',ok);
+      setTimeout(function(){btn2.textContent='复制到知乎';btn2.classList.remove('done')},1800)
+    })
+  });
+  bar.appendChild(btn2);
+  document.body.appendChild(bar);
 })();
 </script>"#;
 
@@ -277,6 +322,9 @@ struct ServeState {
     public: PathBuf,
     /// 构建状态通道：watch 保留最新值，SSE 订阅者连接即收到当前状态。
     status: Arc<watch::Sender<BuildStatus>>,
+    /// 复制排版主题 JSON（内置 + `copythemes/` 自定义）。自定义主题文件
+    /// 保存触发重建后由 watch 线程刷新，HTML 响应注入时读取最新值。
+    copy_themes: Arc<std::sync::RwLock<String>>,
 }
 
 pub fn serve(
@@ -300,6 +348,9 @@ pub fn serve(
         }
     };
     let status = Arc::new(watch::Sender::new(initial));
+
+    // 复制排版主题（内置 + copythemes/ 自定义）初始加载；后续随重建热刷新
+    let copy_themes = Arc::new(std::sync::RwLock::new(crate::copy_theme::themes_json_for(&root)));
 
     // 构建互斥锁：文件监听重建、live 单篇重建、定时部署构建三个 actor 都会跑
     // build::build——并发时 manifest 读写与孤儿清理会互相踩踏（A 的清理可能
@@ -346,8 +397,9 @@ pub fn serve(
         let config = config.clone();
         let status = status.clone();
         let build_lock = build_lock.clone();
+        let copy_themes = copy_themes.clone();
         std::thread::spawn(move || {
-            if let Err(e) = watch_loop(&root, config, status, live, build_lock) {
+            if let Err(e) = watch_loop(&root, config, status, live, build_lock, copy_themes) {
                 eprintln!("文件监听出错: {e}");
             }
         });
@@ -363,7 +415,7 @@ pub fn serve(
         .build()?;
     runtime.block_on(async {
         let public = root.join(config.build.output_dir.as_str());
-        let state = Arc::new(ServeState { public, status });
+        let state = Arc::new(ServeState { public, status, copy_themes });
 
         let app = Router::new()
             .route("/__events", get(events_handler))
@@ -439,7 +491,12 @@ async fn index_handler(
     State(state): State<Arc<ServeState>>,
     headers: HeaderMap,
 ) -> Response {
-    serve_static_async(state.public.clone(), "index.html".to_string(), headers).await
+    let themes = state
+        .copy_themes
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    serve_static_async(state.public.clone(), "index.html".to_string(), headers, themes).await
 }
 
 async fn static_handler(
@@ -447,14 +504,28 @@ async fn static_handler(
     AxumPath(path): AxumPath<String>,
     headers: HeaderMap,
 ) -> Response {
-    serve_static_async(state.public.clone(), path, headers).await
+    let themes = state
+        .copy_themes
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    serve_static_async(state.public.clone(), path, headers, themes).await
 }
 
 /// 磁盘读 + 实时 gzip 都是阻塞操作，必须移入 spawn_blocking：
 /// LAN 模式（--host 0.0.0.0）下并发请求共享同一 tokio worker 池，
 /// 在 async 上下文里做慢盘读会卡住整个 runtime。
-async fn serve_static_async(public: PathBuf, rel: String, headers: HeaderMap) -> Response {
-    match tokio::task::spawn_blocking(move || serve_static(&public, &rel, &headers)).await {
+async fn serve_static_async(
+    public: PathBuf,
+    rel: String,
+    headers: HeaderMap,
+    copy_themes_json: String,
+) -> Response {
+    match tokio::task::spawn_blocking(move || {
+        serve_static(&public, &rel, &headers, &copy_themes_json)
+    })
+    .await
+    {
         Ok(resp) => resp,
         Err(e) => {
             eprintln!("静态文件请求处理失败: {e}");
@@ -498,7 +569,7 @@ fn is_safe_rel_path(rel: &str) -> bool {
         .all(|c| matches!(c, std::path::Component::Normal(_)))
 }
 
-fn serve_static(public: &Path, rel: &str, headers: &HeaderMap) -> Response {
+fn serve_static(public: &Path, rel: &str, headers: &HeaderMap, copy_themes_json: &str) -> Response {
     // 路径遍历防护：组件级校验。仅挡 `..` 不够——Windows 上 `Path::join`
     // 遇到带盘符/根的路径（如 axum 通配路由解码后保留的 `C:/Windows/win.ini`）
     // 会整体替换基路径，造成任意文件读取。只放行纯相对分量。
@@ -516,7 +587,7 @@ fn serve_static(public: &Path, rel: &str, headers: &HeaderMap) -> Response {
             let content_type = mime_for(&full);
             if content_type.starts_with("text/html") {
                 let html = String::from_utf8_lossy(&data).to_string();
-                let injected = inject_reload(&html);
+                let injected = inject_reload(&html, copy_themes_json);
                 // 注入过脚本的 HTML 无法用磁盘预压缩产物，实时 gzip
                 if accept_gzip
                     && let Ok(compressed) = gzip_bytes(injected.as_bytes())
@@ -586,15 +657,22 @@ fn not_found() -> Response {
         .unwrap()
 }
 
-fn inject_reload(html: &str) -> String {
+fn inject_reload(html: &str, copy_themes_json: &str) -> String {
     if let Some(pos) = html.rfind("</body>") {
         let mut s = html.to_string();
-        s.insert_str(pos, COPY_SCRIPT);
+        s.insert_str(pos, &copy_script(copy_themes_json));
         s.insert_str(pos, LIVE_RELOAD_SCRIPT);
         s
     } else {
         html.to_string()
     }
+}
+
+/// 复制按钮脚本：`__COPY_THEMES_JSON__` 占位符替换为主题清单 JSON
+/// （内置 + copythemes/ 自定义，由调用方传入——自定义主题保存后随重建
+/// 热刷新，因此不做进程级缓存）。
+fn copy_script(copy_themes_json: &str) -> String {
+    COPY_SCRIPT.replace("__COPY_THEMES_JSON__", copy_themes_json)
 }
 
 fn mime_for(path: &Path) -> &'static str {
@@ -624,7 +702,15 @@ fn watch_loop(
     status: Arc<watch::Sender<BuildStatus>>,
     mut live: Option<LiveState>,
     build_lock: Arc<std::sync::Mutex<()>>,
+    copy_themes: Arc<std::sync::RwLock<String>>,
 ) -> anyhow::Result<()> {
+    // 复制主题 JSON 随每次重建刷新（copythemes/ 新增/修改/删除均走重建路径，
+    // 重扫目录代价可忽略）；失败也不影响下一轮。
+    let refresh_copy_themes = || {
+        *copy_themes.write().unwrap_or_else(std::sync::PoisonError::into_inner) =
+            crate::copy_theme::themes_json_for(root);
+    };
+
     let mut config = config;
     let (tx, rx) = std::sync::mpsc::channel::<notify::Result<notify::Event>>();
 
@@ -683,6 +769,7 @@ fn watch_loop(
                         match live_rebuild_article(root, &config, state) {
                             Ok(()) => {
                                 push_status(&status, None);
+                                refresh_copy_themes();
                                 println!("✅ 实时预览已更新，已通知浏览器刷新");
                             }
                             Err(e) => {
@@ -696,6 +783,7 @@ fn watch_loop(
                     match build::build(root, &config, true) {
                         Ok(_) => {
                             push_status(&status, None);
+                            refresh_copy_themes();
                             println!("✅ 重建完成，已通知浏览器刷新");
                         }
                         Err(e) => {
@@ -822,7 +910,7 @@ fn push_status(status: &watch::Sender<BuildStatus>, error: Option<String>) {
 /// 首次拉包时，包落盘后能自动重建；`.typall/cache`/publish.json 等噪声不监听）。
 fn collect_watch_targets(root: &Path) -> Vec<(PathBuf, RecursiveMode)> {
     let mut targets = Vec::new();
-    for dir in ["posts", "pages", "assets", "themes"] {
+    for dir in ["posts", "pages", "assets", "themes", crate::copy_theme::CUSTOM_DIR] {
         targets.push((root.join(dir), RecursiveMode::Recursive));
     }
     targets.push((root.join(".typall/packages"), RecursiveMode::Recursive));
@@ -879,6 +967,11 @@ fn open_browser(url: &str) {
 mod tests {
     use super::*;
     use notify::event::{AccessKind, AccessMode, DataChange};
+
+    /// 测试用内置主题 JSON（生产路径由 ServeState 传入 themes_json_for）。
+    fn builtin_json() -> String {
+        serde_json::to_string(&crate::copy_theme::builtin()).unwrap()
+    }
 
     #[test]
     fn collect_watch_targets_includes_packages_and_config() {
@@ -1025,11 +1118,35 @@ mod tests {
 
     #[test]
     fn inject_reload_includes_both_scripts() {
-        let out = inject_reload("<html><body><p>x</p></body></html>");
+        let themes = builtin_json();
+        let out = inject_reload("<html><body><p>x</p></body></html>", &themes);
         assert!(out.contains("EventSource('/__events')"), "应有 Live Reload SSE 脚本");
         assert!(out.contains("复制到公众号"), "应有复制按钮脚本");
         // 两个脚本都注入在 </body> 之前
         assert!(out.find("__typall-build-errors").unwrap() < out.find("</body>").unwrap());
+    }
+
+    #[test]
+    fn copy_script_carries_themes_and_dispatch_hook() {
+        let out = inject_reload(
+            "<html><body><p>x</p></body></html>",
+            &builtin_json(),
+        );
+        // 占位符已替换为主题 JSON（含默认主题与暗色主题标记）
+        assert!(!out.contains("__COPY_THEMES_JSON__"), "主题 JSON 占位符必须被替换");
+        assert!(out.contains("\"id\":\"moli\""), "应含默认主题墨理蓝");
+        assert!(out.contains("\"dark\":true"), "应含暗色主题标记");
+        // 软刷新事件挂钩：Live Reload 换入新正文后复制脚本重套主题
+        assert!(out.contains("typall:content-refresh"));
+    }
+
+    #[test]
+    fn inject_reload_passes_custom_themes_through() {
+        // 自定义主题 JSON 原样进入注入脚本（热加载通道存在性的锚点）
+        let custom = r#"[{"id":"academy","label":"学院青","dark":false,"styles":{"p":"color:#123;"}},{"id":"moli","label":"墨理蓝（默认）","dark":false,"styles":{}}]"#;
+        let out = inject_reload("<html><body><p>x</p></body></html>", custom);
+        assert!(out.contains("\"id\":\"academy\""), "自定义主题应随注入下发");
+        assert!(out.contains("学院青"));
     }
 
     #[test]
@@ -1059,12 +1176,14 @@ mod tests {
         std::fs::write(tmp.join("posts").join("ok.html"), "<p>ok</p>").unwrap();
         let headers = HeaderMap::new();
 
+        let themes = builtin_json();
+
         // 站内文件可读
-        let resp = serve_static(&tmp, "posts/ok.html", &headers);
+        let resp = serve_static(&tmp, "posts/ok.html", &headers, &themes);
         assert_eq!(resp.status(), 200);
         // 盘符绝对路径与遍历一律 404，且确实没有读出 public/ 之外的文件
         for evil in ["C:/Windows/win.ini", "/C:/Windows/win.ini", "../Cargo.toml", "/etc/passwd"] {
-            let resp = serve_static(&tmp, evil, &headers);
+            let resp = serve_static(&tmp, evil, &headers, &themes);
             assert_eq!(resp.status(), 404, "路径 `{evil}` 应被拒绝");
         }
         std::fs::remove_dir_all(&tmp).ok();

@@ -176,6 +176,40 @@ typall publish --dry-run                        # 仅打印计划，不写盘、
 早期版本的草稿 API 推送（`--push`、素材转传、`typall.wechat.toml` 凭据、
 token/媒体缓存）已整体移除。
 
+**复制排版主题**：浮动栏顶部的下拉框可在排版风格间切换——内置 5 套：
+**墨理蓝（默认）/ 纸砚衬线 / 柑橘暖阳 / 极简黑白 / 曜石夜（暗色）**。
+选中后正文**即时套用该风格**（所见即所得——页面呈现的就是粘贴进平台的
+效果），选回「站点样式」还原；选择存 localStorage，刷新后自动恢复。
+「复制到公众号」「复制到知乎」都按当前所选主题出稿（「站点样式」档位下
+按默认墨理蓝出稿）。主题与站点主题（`themes/`）解耦，只影响复制输出，
+`build` 产物零 JS 不受影响。
+
+**自定义复制主题（CSS）**：主题就是一份普通的 CSS 文件——在项目根建
+`copythemes/<id>.css`（文件名即主题 id，限字母/数字/`-`/`_`），用元素选择器
+写想改的排版，**只写想改的元素，其余回落默认墨理基底**；serve 运行中
+新增/修改即随重建**热加载**：
+
+```css
+/* copythemes/academy.css —— 文件头可选元信息：显示名与暗色标记 */
+/* typall-copy-theme: label="学院青" dark=false */
+h2 { border-left: 4px solid #7c3aed; padding-left: 12px; color: #2b2350; }
+a { color: #7c3aed; }
+blockquote { border-left: 3px solid #7c3aed; background: #f3eefc; }
+```
+
+可用的选择器（映射到正文的内联样式槽位）：`article`（正文基底）、
+`h1`–`h4`、`p`、`blockquote`、`pre`、`code`（行内 code）、`pre code`、
+`ul`/`ol`/`li`、`table`/`th`/`td`、`hr`、`a`、`img`、`strong`（或 `b`）、
+`em`（或 `i`）、`del`（或 `s`）、`svg`（公式/插图底色，暗色主题必写）、
+`.eq-num`（公式编号）、`[data-equation="block"]`（块级公式容器）。
+类名/伪类/@规则会被忽略（粘贴目标不认它们）；值里的引号分号、`url()` 均可正常解析。
+内置五套主题就是五份现成的 CSS 模板（`src/copy_theme.rs` 内 `PAPER_CSS` 等常量），照抄改写即可。
+
+也支持令牌式 `copythemes/<id>.toml`（`[palette]` 色板字段覆盖 + `[styles]`
+逐槽位覆写），适合只想微调配色的场景；非法文件（坏语法、id 与内置冲突、
+非法文件名）启动与热加载时都会跳过并在终端告警；样式值中的 `<` 注入时
+统一转义，杜绝 `</script>` 提前闭合注入脚本。
+
 - frontmatter 含 `title / date / updated / tags / categories / draft / excerpt`，并标注 `math: typst`；
 - **公式**输出 Typst 数学源码（`$..$` / `$$..$$`）；LaTeX 转换是知乎等目标的后续规划；
 - **插图**（cetz 等内联 SVG）保留为原生 HTML 块，不支持的平台会剥离；
@@ -322,7 +356,8 @@ front-matter 可显式指定文章的社交分享图（og:image 第一优先级�
 
 **发布到知乎的流程**：`typall publish --to zhihu --slug posts/xxx` → 浏览器打开产物 HTML
 全选复制 → 粘贴进知乎文章编辑器 → 公式粘贴后按知乎提示确认为公式块。也可以
-`typall serve` 打开文章页点「复制到知乎」按钮（直接复制当前页面正文）。
+`typall serve` 打开文章页点「复制到知乎」按钮（按当前「复制排版主题」出稿，
+见「微信目标说明」；知乎编辑器会清洗掉多余的内联样式，带上无副作用）。
 
 ## 写作指南
 
