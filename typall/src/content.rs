@@ -206,6 +206,10 @@ pub fn auto_excerpt(body_html: &str, max_len: usize) -> String {
 /// 允许多级别名（每级都必须是普通名字，如 `old/posts/foo`）。
 pub(crate) fn is_safe_alias(alias: &str) -> bool {
     !alias.is_empty()
+        // 盘符与反斜杠显式拒绝：`Component::Prefix` 只在 Windows 存在，若不加
+        // 这条，Linux 上 "C:/x" 的分量全是 Normal，会被当成普通相对名放行
+        && !alias.contains(':')
+        && !alias.contains('\\')
         && Path::new(alias)
             .components()
             .all(|c| matches!(c, std::path::Component::Normal(_)))

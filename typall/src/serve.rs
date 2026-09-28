@@ -616,9 +616,13 @@ fn gzip_bytes(data: &[u8]) -> std::io::Result<Vec<u8>> {
 /// 拒绝盘符前缀（`C:`）、根目录（`/`）、`..`、`.`——前三者会导致
 /// `Path::join` 逃出 `public/` 基目录（Windows 上 `join` 遇绝对路径整体替换）。
 fn is_safe_rel_path(rel: &str) -> bool {
-    Path::new(rel)
-        .components()
-        .all(|c| matches!(c, std::path::Component::Normal(_)))
+    // 盘符与反斜杠显式拒绝：`Component::Prefix` 只在 Windows 存在，若不加
+    // 这条，Linux 上 "C:/Windows/win.ini" 的分量全是 Normal，守卫会被绕过
+    !rel.contains(':')
+        && !rel.contains('\\')
+        && Path::new(rel)
+            .components()
+            .all(|c| matches!(c, std::path::Component::Normal(_)))
 }
 
 fn serve_static(public: &Path, rel: &str, headers: &HeaderMap, inject: &Inject) -> Response {
