@@ -53,9 +53,9 @@ typall build -C ~/blogs/physics        # 等价：参数放在子命令后
 | 命令 | 说明 |
 |------|------|
 | `typall init [name]` | 创建项目脚手架（含示例文章、配置） |
-| `typall new <post>` | 在 `posts/` 下生成新文章模板 |
+| `typall new <post>` | 在 `posts/` 下生成新文章模板（`--series <名>` 用 `_templates/<名>.typ` 作骨架，支持 `{{title}}`/`{{date}}`/`{{series}}` 占位符） |
 | `typall build` | 构建站点到 `public/`（`--strict` 死链检查、`--drafts` 含草稿、`--output` 自定义输出目录） |
-| `typall serve` | 开发服务器 + Live Reload（`--port` 端口、`--open` 开浏览器、`--host 0.0.0.0` 开放局域网并打印手机扫码二维码） |
+| `typall serve` | 开发服务器 + Live Reload（`--port` 端口、`--open` 开浏览器、`--host 0.0.0.0` 开放局域网并打印手机扫码二维码）；附「✏️ 编辑本页」深链、构建错误浮层 `文件:行:列` 深链（`[serve] editor` 配置）与 `/__gallery` 素材库页 |
 | `typall live [slug]` | 实时写作模式：盯住一篇文章，保存即单篇重编译并刷新浏览器（毫秒级；slug 省略取最近修改的一篇） |
 | `typall deploy` | 按配置部署（`--target` 临时覆盖、`--dry-run` 模拟） |
 | `typall publish --to markdown` | 将文章导出为 Markdown（单篇 → 平台，见「发布（publish）」） |
@@ -175,6 +175,17 @@ typall publish --dry-run                        # 仅打印计划，不写盘、
 粘贴保存时编辑器会把外链图片**自动转存**为微信图床文件，因此无需 API 上传素材——
 早期版本的草稿 API 推送（`--push`、素材转传、`typall.wechat.toml` 凭据、
 token/媒体缓存）已整体移除。
+
+**编辑器互通**：配置 `[serve] editor = "vscode"`（或 `cursor` / 任意自定义
+scheme）后，文章页浮动栏出现「✏️ 编辑本页」按钮——一键在编辑器里打开本页
+对应的 `.typ` 源文件；构建失败时错误浮层里的 `文件:行:列` 也会变成可点击
+深链，直达出错位置。未配置该字段则不注入任何编辑入口，`build` 产物不受影响。
+
+**素材库（`/__gallery`）**：serve 运行时访问 `http://127.0.0.1:<端口>/__gallery`：
+拖拽 / Ctrl+V 粘贴 / 点击上传图片 → 自动存入 `assets/images/`（重名自动加
+序号，大小上限 20MB），并给出可直接粘贴进文章的 `#image("../assets/images/…")`
+片段；同页浏览已有图片与 `assets/series-figures/` 全部成品图（点击复制
+`#import` 行），附 figkit 六类模板速查。
 
 **复制排版主题**：浮动栏顶部的下拉框可在排版风格间切换——内置 5 套：
 **墨理蓝（默认）/ 纸砚衬线 / 柑橘暖阳 / 极简黑白 / 曜石夜（暗色）**。
