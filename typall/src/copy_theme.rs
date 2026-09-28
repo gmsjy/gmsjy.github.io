@@ -797,7 +797,7 @@ h1 = 'font-size:30px;text-align:center;color:#12343b;'
         let custom = &themes[5];
         assert_eq!(custom["id"].as_str().unwrap(), "academy");
         assert_eq!(custom["label"].as_str().unwrap(), "学院青");
-        assert_eq!(custom["dark"].as_bool().unwrap(), false, "dark 缺省 false");
+        assert!(!custom["dark"].as_bool().unwrap(), "dark 缺省 false");
         let styles = custom["styles"].as_object().unwrap();
         assert!(styles["a"].as_str().unwrap().contains("#0f766e"));
         assert!(styles["h2"].as_str().unwrap().contains("border-left:4px solid #0f766e"));
@@ -825,7 +825,7 @@ h1 = 'font-size:30px;text-align:center;color:#12343b;'
         let ocean = &themes[5];
         assert_eq!(ocean["id"].as_str().unwrap(), "ocean");
         assert_eq!(ocean["label"].as_str().unwrap(), "深海蓝");
-        assert_eq!(ocean["dark"].as_bool().unwrap(), false);
+        assert!(!ocean["dark"].as_bool().unwrap());
         let styles = ocean["styles"].as_object().unwrap();
         assert!(styles["h2"].as_str().unwrap().contains("border-left:4px solid #2563eb"));
         assert!(styles["a"].as_str().unwrap().contains("#2563eb"));
@@ -847,7 +847,7 @@ h1 = 'font-size:30px;text-align:center;color:#12343b;'
         let themes = all_themes(tmp.path());
         let ids: Vec<&str> = themes.iter().map(|t| t["id"].as_str().unwrap()).collect();
         assert_eq!(ids, ["moli", "paper", "citrus", "minimal", "obsidian", "ok"]);
-        assert_eq!(themes[5]["dark"].as_bool().unwrap(), true);
+        assert!(themes[5]["dark"].as_bool().unwrap());
         let tmp2 = tempfile::tempdir().unwrap();
         let dir2 = tmp2.path().join(CUSTOM_DIR);
         std::fs::create_dir_all(&dir2).unwrap();

@@ -1840,6 +1840,6 @@ mod tests {
         assert!(!html.contains("evil.html"), "非白名单文件不得出现");
         assert!(html.contains("fig as fig-difficulty"), "成品图应给出推导别名");
         assert!(html.contains("复制片段"), "应含复制按钮");
-        assert!(html.contains("__IMAGES__") == false, "占位符必须全部替换");
+        assert!(!html.contains("__IMAGES__"), "占位符必须全部替换");
     }
 }
