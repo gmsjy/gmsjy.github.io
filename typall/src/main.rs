@@ -45,7 +45,13 @@ enum Command {
     /// 创建新项目脚手架
     Init { name: Option<String> },
     /// 在 posts/ 下生成新文章
-    New { post: String },
+    New {
+        post: String,
+        /// 系列模板：使用 `_templates/<系列>.typ` 作骨架，支持
+        /// `{{title}}` / `{{date}}` / `{{series}}` 占位符
+        #[arg(long)]
+        series: Option<String>,
+    },
     /// 构建完整站点
     Build {
         /// 启用严格模式（死链检查）
@@ -200,7 +206,7 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Command::Init { name } => cmd_init(name.as_deref()),
-        Command::New { post } => cmd_new(&root, &post),
+        Command::New { post, series } => cmd_new(&root, &post, series.as_deref()),
         Command::Build { strict, drafts, output } => {
             let mut config = config::Config::load(&root)?;
             if strict {
@@ -891,7 +897,7 @@ $ integral_(-oo)^(oo) e^(-x^2) dif x = sqrt(pi) $
     Ok(())
 }
 
-fn cmd_new(root: &Path, post: &str) -> anyhow::Result<()> {
+fn cmd_new(root: &Path, post: &str, series: Option<&str>) -> anyhow::Result<()> {
     let name = post.trim();
     // 输入校验：文件名与生成的 Typst 源都来自用户输入。
     // 拒绝路径分隔符/`..`（越界写文件）与 `"`（注入 #let title = "…" 破坏源码）。
@@ -905,24 +911,70 @@ fn cmd_new(root: &Path, post: &str) -> anyhow::Result<()> {
     if let Some(c) = name.chars().find(|c| forbidden.contains(c) || c.is_control()) {
         anyhow::bail!("文章名含非法字符 `{c}`（禁止路径分隔符、引号与 Windows 保留字符）：{post}");
     }
+    // 系列名直接拼进模板路径，同样不能含路径分量/引号
+    if let Some(s) = series {
+        let s = s.trim();
+        if s.is_empty() {
+            anyhow::bail!("系列名不能为空");
+        }
+        if s.contains("..") {
+            anyhow::bail!("系列名不能包含 ..：{s}");
+        }
+        if let Some(c) = s.chars().find(|c| forbidden.contains(c) || c.is_control()) {
+            anyhow::bail!("系列名含非法字符 `{c}`：{s}");
+        }
+    }
     let posts = root.join("posts");
     std::fs::create_dir_all(&posts)?;
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let filename = format!("{today}-{name}.typ");
-    // 模板依赖 assets/preview.typ（fig / eq-numbering 兼容层）。init 出的新项目
-    // 一定有；旧版脚手架的项目可能没有——缺失时降级为无 import 的最简模板，
-    // 保证 `init → new → build` 全链路永不因这一行 import 断掉。
-    let has_preview = root.join("assets").join("preview.typ").is_file();
-    let imports = if has_preview {
-        r#"#import "../assets/preview.typ": fig, eq-numbering
+    let content = match series.map(str::trim) {
+        Some(s) => {
+            // 系列模板：`_templates/<系列>.typ` 为完整骨架，占位符就地替换
+            let tpl = root.join("_templates").join(format!("{s}.typ"));
+            if !tpl.is_file() {
+                let mut available: Vec<String> = std::fs::read_dir(root.join("_templates"))
+                    .map(|rd| {
+                        rd.filter_map(|e| e.ok())
+                            .filter_map(|e| {
+                                let p = e.path();
+                                if p.extension().and_then(|x| x.to_str()) == Some("typ") {
+                                    p.file_stem().and_then(|x| x.to_str()).map(String::from)
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                available.sort();
+                let hint = if available.is_empty() {
+                    "目录不存在或为空".to_string()
+                } else {
+                    format!("可用模板：{}", available.join("、"))
+                };
+                anyhow::bail!("系列模板不存在：_templates/{s}.typ（{hint}）");
+            }
+            std::fs::read_to_string(&tpl)?
+                .replace("{{title}}", name)
+                .replace("{{date}}", &today)
+                .replace("{{series}}", s)
+        }
+        None => {
+            // 默认模板依赖 assets/preview.typ（fig / eq-numbering 兼容层）。init 出的新项目
+            // 一定有；旧版脚手架的项目可能没有——缺失时降级为无 import 的最简模板，
+            // 保证 `init → new → build` 全链路永不因这一行 import 断掉。
+            let has_preview = root.join("assets").join("preview.typ").is_file();
+            let imports = if has_preview {
+                r#"#import "../assets/preview.typ": fig, eq-numbering
 #show math.equation.where(block: true): set math.equation(numbering: eq-numbering)
 #show math.equation.where(block: false): set math.equation(numbering: none)
 "#
-    } else {
-        ""
-    };
-    let content = format!(
-        r#"#let title = "{name}"
+            } else {
+                ""
+            };
+            format!(
+                r#"#let title = "{name}"
 #let date = "{today}"
 #let tags = ()
 #let draft = false
@@ -930,7 +982,9 @@ fn cmd_new(root: &Path, post: &str) -> anyhow::Result<()> {
 {imports}
 = {name}
 "#
-    );
+            )
+        }
+    };
     std::fs::write(posts.join(&filename), content)?;
     println!("✅ 已创建 posts/{filename}");
     Ok(())
@@ -1025,7 +1079,7 @@ mod tests {
         assert!(embedded.contains("eq-numbering"));
         assert!(embedded.contains("html.frame"), "应与本仓库的 preview.typ 同源");
 
-        cmd_new(&root, "hello-math").unwrap();
+        cmd_new(&root, "hello-math", None).unwrap();
         let created = std::fs::read_to_string(root.join("posts").join(format!(
             "{}-hello-math.typ",
             chrono::Local::now().format("%Y-%m-%d")
@@ -1040,7 +1094,7 @@ mod tests {
         // 不产出引用缺失文件的死链 import。
         let tmp = tempfile::tempdir().unwrap();
         std::fs::create_dir_all(tmp.path().join("posts")).unwrap();
-        cmd_new(tmp.path(), "plain").unwrap();
+        cmd_new(tmp.path(), "plain", None).unwrap();
         let created = std::fs::read_to_string(tmp.path().join("posts").join(format!(
             "{}-plain.typ",
             chrono::Local::now().format("%Y-%m-%d")
@@ -1048,5 +1102,55 @@ mod tests {
         .unwrap();
         assert!(!created.contains("preview.typ"), "无 preview.typ 时模板不应 import 它");
         assert!(created.contains(r#"#let title = "plain""#));
+    }
+
+    #[test]
+    fn new_with_series_uses_template_and_fills_placeholders() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(tmp.path().join("posts")).unwrap();
+        std::fs::create_dir_all(tmp.path().join("_templates")).unwrap();
+        std::fs::write(
+            tmp.path().join("_templates").join("讲义.typ"),
+            r##"#let title = "{{title}}"
+#let date = "{{date}}"
+#let tags = ("测试")
+#let series = "{{series}}"
+#let series_weight = 0
+
+= {{title}}
+"##,
+        )
+        .unwrap();
+        cmd_new(tmp.path(), "细胞结构", Some("讲义")).unwrap();
+        let created = std::fs::read_to_string(tmp.path().join("posts").join(format!(
+            "{}-细胞结构.typ",
+            chrono::Local::now().format("%Y-%m-%d")
+        )))
+        .unwrap();
+        assert!(created.contains(r#"#let title = "细胞结构""#));
+        assert!(created.contains(&format!(
+            r#"#let date = "{}""#,
+            chrono::Local::now().format("%Y-%m-%d")
+        )));
+        assert!(created.contains(r#"#let series = "讲义""#));
+        assert!(created.contains("= 细胞结构"));
+        assert!(!created.contains("{{"), "占位符必须全部替换");
+    }
+
+    #[test]
+    fn new_with_missing_series_template_lists_available() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(tmp.path().join("posts")).unwrap();
+        std::fs::create_dir_all(tmp.path().join("_templates")).unwrap();
+        std::fs::write(tmp.path().join("_templates").join("讲义.typ"), "x").unwrap();
+        let err = cmd_new(tmp.path(), "t", Some("不存在")).unwrap_err();
+        assert!(err.to_string().contains("讲义"), "错误信息应列出可用模板：{err}");
+        // 路径穿越被拒
+        assert!(cmd_new(tmp.path(), "t", Some("../evil")).is_err());
+        // 无 _templates 目录同样报人话错误
+        let tmp2 = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(tmp2.path().join("posts")).unwrap();
+        let err2 = cmd_new(tmp2.path(), "t", Some("讲义")).unwrap_err();
+        assert!(err2.to_string().contains("不存在或为空"), "{err2}");
     }
 }
