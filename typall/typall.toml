@@ -18,6 +18,11 @@ equation_prefix = "公式"
 [theme]
 name = "default"
 
+[serve]
+# 预览页「✏️ 编辑本页」按钮与错误浮层 文件:行:列 深链的编辑器 scheme
+# （vscode / cursor / 任意自定义 scheme）；留空则不注入编辑入口
+editor = "vscode"
+
 [deploy]
 strategy = "git"               # git | copy | netlify | vercel
 

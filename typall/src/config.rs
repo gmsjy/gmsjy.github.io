@@ -20,6 +20,19 @@ pub struct Config {
     /// 是两种动作——publish 是单篇 → 平台，带远端状态。字段先行占位，
     /// 当前版本**解析但不消费**；`typall publish` 子命令在后续阶段实现。
     pub publish: PublishConfig,
+    /// 预览服务器增强（仅 `serve`/`live` 消费，`build` 产物零 JS 不受影响）。
+    pub serve: ServeConfig,
+}
+
+/// `[serve]` 预览增强配置。
+#[derive(Debug, Clone, Deserialize, Default)]
+#[serde(default)]
+pub struct ServeConfig {
+    /// 编辑器 scheme，用于预览页「✏️ 编辑本页」按钮与构建错误浮层的
+    /// `文件:行:列` 深链：`vscode`（vscode://file/…）、`cursor`、或任意
+    /// 自定义 scheme（含 `://` 则原样使用，如 `windsurf://file/`）。
+    /// 空 / 未配置 = 不注入任何编辑入口。
+    pub editor: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
