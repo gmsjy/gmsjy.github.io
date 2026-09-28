@@ -51,6 +51,18 @@ fn manifest_lines(m: &[(String, u64)]) -> String {
     s
 }
 
+/// og/*.png 是含文字的位图社交卡：字体栅格化天然平台相关（无中文字体的
+/// Linux 上字形不同甚至缺失），哈希无法跨平台比对。黄金基线比对前把
+/// `og/` 条目的哈希归一化为占位符——路径仍在清单中（存在性与命名受
+/// 保护），而「二次构建逐字节一致」的 m1==m2 断言不受影响（同平台渲染确定）。
+fn normalize_for_golden(m: &[(String, u64)]) -> Vec<(String, u64)> {
+    m.iter()
+        .map(|(rel, h)| {
+            if rel.starts_with("og/") { (rel.clone(), 0) } else { (rel.clone(), *h) }
+        })
+        .collect()
+}
+
 /// 把夹具复制到一个全新的临时项目根（不带任何缓存/产物）。
 fn setup_root(tag: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("typall-e2e-{tag}"));
@@ -110,9 +122,9 @@ fn build_golden_and_idempotent() {
     assert!(out_dir.join("sitemap.xml").exists());
     assert!(out_dir.join("search.json").exists());
 
-    // 黄金基线比对（或更新）
+    // 黄金基线比对（或更新）。og/ 位图哈希先归一化——见 normalize_for_golden。
     let golden = Path::new(GOLDEN);
-    let actual = manifest_lines(&m1);
+    let actual = manifest_lines(&normalize_for_golden(&m1));
     if std::env::var("GOLDEN_UPDATE").is_ok() {
         fs::create_dir_all(golden.parent().unwrap()).expect("mkdir golden");
         fs::write(golden, &actual).expect("write golden");

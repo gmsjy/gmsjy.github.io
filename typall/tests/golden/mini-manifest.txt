@@ -13,9 +13,9 @@ c94f8b77afc867ae atom.xml.gz
 ffe9c046c2015d4a index.html
 af758bd23f20d977 index.html.br
 8b33c3d6853438d7 index.html.gz
-79cea2305dc1539d og/pages-about.png
-7f9cc25ebc8cb3a1 og/posts-01-math.png
-77280a40f7af78b0 og/posts-02-physics.png
+0000000000000000 og/pages-about.png
+0000000000000000 og/posts-01-math.png
+0000000000000000 og/posts-02-physics.png
 fdf4bdd4e0b8d5e9 pages/about/index.html
 60b1bf6878031d5c pages/about/index.html.br
 6d03d0c711b3ef1d pages/about/index.html.gz
