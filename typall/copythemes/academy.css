@@ -1,8 +1,0 @@
-/* typall-copy-theme: label="学院青·紫" */
-/* 自定义复制主题示例（CSS 版，见 README「自定义复制主题」）：
-   只写想改的元素，其余回落默认墨理基底。 */
-article { font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif; font-size:16px; line-height:1.8; color:#3a3350; }
-h1 { font-size:28px; font-weight:bold; line-height:1.3; margin:34px 0 16px; text-align:center; color:#2b2350; }
-h2 { font-size:22px; font-weight:bold; line-height:1.3; margin:34px 0 14px; padding-left:12px; border-left:4px solid #7c3aed; color:#2b2350; }
-a { color:#7c3aed; }
-blockquote { font-size:16px; line-height:1.8; margin:18px 0; padding:8px 18px; border-left:3px solid #7c3aed; background:#f3eefc; color:#6b6480; }
